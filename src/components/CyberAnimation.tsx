@@ -13,18 +13,25 @@ export const CyberAnimation = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
+    // Wind particles
     let particles: Array<{
       x: number;
       y: number;
-      radius: number;
+      size: number;
       color: string;
-      vx: number;
-      vy: number;
-      originalX: number;
-      originalY: number;
+      speed: number;
+      angle: number;
+      opacity: number;
     }> = [];
     
-    const colors = ["#0EA5E9", "#8B5CF6", "#D946EF", "#F97316", "#9b87f5"];
+    // Green color palette for cyber wind
+    const colors = [
+      "rgba(122, 229, 130, 0.7)",
+      "rgba(66, 211, 146, 0.7)",
+      "rgba(42, 188, 102, 0.7)",
+      "rgba(30, 156, 69, 0.7)",
+      "rgba(18, 128, 42, 0.7)",
+    ];
     
     const resizeCanvas = () => {
       canvas.width = canvas.offsetWidth;
@@ -34,75 +41,103 @@ export const CyberAnimation = () => {
     
     const createParticles = () => {
       particles = [];
-      const numParticles = Math.floor(canvas.width * canvas.height / 10000);
+      const numParticles = Math.floor(canvas.width * canvas.height / 6000);
       
       for (let i = 0; i < numParticles; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const radius = Math.random() * 2 + 1;
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        
-        particles.push({
-          x,
-          y,
-          radius,
-          color,
-          vx: 0,
-          vy: 0,
-          originalX: x,
-          originalY: y
-        });
+        particles.push(createParticle());
       }
+    };
+    
+    const createParticle = () => {
+      const size = Math.random() * 15 + 2;
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: Math.random() * 3 + 1,
+        angle: Math.random() * Math.PI * 2,
+        opacity: Math.random() * 0.6 + 0.2
+      };
+    };
+    
+    const drawWind = (x: number, y: number) => {
+      ctx.save();
+      
+      // Create radial gradient for the wind swoosh
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, 150);
+      gradient.addColorStop(0, "rgba(122, 229, 130, 0.4)");
+      gradient.addColorStop(1, "rgba(66, 211, 146, 0)");
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, 150, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
     };
     
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      particles.forEach(particle => {
-        // Calculate distance from mouse
+      // Draw wind effect around mouse
+      if (mousePosition.x > 0 && mousePosition.y > 0) {
+        drawWind(mousePosition.x, mousePosition.y);
+      }
+      
+      // Update and draw particles
+      particles.forEach((particle, index) => {
+        // Calculate distance from mouse to affect particle movement
         const dx = mousePosition.x - particle.x;
         const dy = mousePosition.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Repel particles if mouse is nearby
-        if (distance < 100) {
-          const forceDirectionX = dx / distance;
-          const forceDirectionY = dy / distance;
-          const force = (100 - distance) / 50;
-          particle.vx = -forceDirectionX * force;
-          particle.vy = -forceDirectionY * force;
+        // Adjust particle angle based on mouse position
+        if (distance < 200 && mousePosition.x > 0 && mousePosition.y > 0) {
+          const targetAngle = Math.atan2(dy, dx) + Math.PI; // Move away from mouse
+          const angleDiff = targetAngle - particle.angle;
+          
+          // Normalize angle difference
+          const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+          
+          // Gradually adjust angle
+          particle.angle += normalizedDiff * 0.1;
+          particle.speed = Math.min(particle.speed + 0.2, 8);
         } else {
-          // Move back to original position
-          const dxOrigin = particle.originalX - particle.x;
-          const dyOrigin = particle.originalY - particle.y;
-          particle.vx = dxOrigin * 0.05;
-          particle.vy = dyOrigin * 0.05;
+          // Slow down gradually when away from mouse
+          particle.speed = Math.max(particle.speed - 0.05, 1);
         }
         
-        particle.x += particle.vx;
-        particle.y += particle.vy;
+        // Move particle based on its angle and speed
+        particle.x += Math.cos(particle.angle) * particle.speed;
+        particle.y += Math.sin(particle.angle) * particle.speed;
+        
+        // Wrap particles around the canvas
+        if (particle.x < -50) particle.x = canvas.width + 50;
+        if (particle.x > canvas.width + 50) particle.x = -50;
+        if (particle.y < -50) particle.y = canvas.height + 50;
+        if (particle.y > canvas.height + 50) particle.y = -50;
         
         // Draw the particle
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.save();
+        ctx.globalAlpha = particle.opacity;
         ctx.fillStyle = particle.color;
+        
+        // Draw a more wind-like shape
+        ctx.beginPath();
+        ctx.moveTo(particle.x, particle.y);
+        ctx.lineTo(
+          particle.x - Math.cos(particle.angle) * particle.size * 2.5,
+          particle.y - Math.sin(particle.angle) * particle.size * 2.5
+        );
+        ctx.lineTo(
+          particle.x - Math.cos(particle.angle) * particle.size * 3 + Math.sin(particle.angle) * particle.size * 0.8,
+          particle.y - Math.sin(particle.angle) * particle.size * 3 - Math.cos(particle.angle) * particle.size * 0.8
+        );
+        ctx.closePath();
         ctx.fill();
         
-        // Draw connections between particles
-        particles.forEach(otherParticle => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 100) {
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(150, 150, 255, ${(100 - distance) / 100 * 0.3})`;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.stroke();
-          }
-        });
+        ctx.restore();
       });
       
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -116,8 +151,13 @@ export const CyberAnimation = () => {
       });
     };
     
+    const handleMouseLeave = () => {
+      setMousePosition({ x: 0, y: 0 });
+    };
+    
     window.addEventListener("resize", resizeCanvas);
     canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
     
     resizeCanvas();
     animate();
@@ -125,19 +165,20 @@ export const CyberAnimation = () => {
     return () => {
       window.removeEventListener("resize", resizeCanvas);
       canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
       cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
   
   return (
-    <div className="w-full mt-12 mb-8 overflow-hidden rounded-lg">
-      <h2 className="font-mono text-xl mb-4 text-center">Interactive Threat Network</h2>
+    <div className="w-full my-12 overflow-hidden rounded-lg">
+      <h2 className="font-mono text-xl mb-4 text-center">The Windy City of Threats</h2>
       <canvas 
         ref={canvasRef} 
-        className="w-full h-[250px] bg-secondary/20 rounded-lg cursor-pointer border border-border"
+        className="w-full h-[300px] bg-gradient-to-b from-secondary/20 to-secondary/5 rounded-lg cursor-pointer border border-border"
       />
       <p className="text-center text-sm text-muted-foreground mt-2">
-        Move your cursor to see how threats disperse in a network
+        Move your cursor through the cyber winds to see how threats disperse
       </p>
     </div>
   );

@@ -103,3 +103,45 @@
     @apply font-sans;
   }
 }
+@layer base {
+  .prose h1 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight leading-tight;
+  }
+
+  .prose h2 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+
+  .prose p {
+    @apply leading-relaxed text-base;
+  }
+
+  .prose ul, .prose ol {
+    @apply pl-5 space-y-1;
+  }
+
+  .prose li {
+    @apply marker:text-muted-foreground;
+  }
+
+  .prose code {
+    @apply bg-muted px-1 py-0.5 rounded text-sm;
+  }
+
+  .prose strong {
+    @apply font-semibold;
+  }
+
+  .prose a {
+    @apply text-blue-500 hover:underline;
+  }
+}
+.prose h2 {
+  @apply text-xl font-semibold mt-8 mb-3;
+}
+.prose ul {
+  @apply ml-5 list-disc space-y-1;
+}
+.prose p {
+  @apply mb-5;
+}

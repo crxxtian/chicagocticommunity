@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Logo from "@/components/Logo"; 
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -22,12 +23,11 @@ export function Navbar() {
   return (
     <nav className="border-b border-border sticky top-0 bg-background z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center">
-              <span className="font-mono font-bold text-xl">CCTIC</span>
-            </Link>
-          </div>
+      <div className="flex justify-between items-center py-4">
+        <div className="flex-shrink-0">
+  <Logo />
+</div>
+
           
           {!isMobile ? (
             <div className="flex items-center space-x-4">

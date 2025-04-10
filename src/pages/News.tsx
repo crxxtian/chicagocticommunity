@@ -30,69 +30,70 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const newsItems = [
   {
     id: 1,
-    title: "New Phishing Campaign Targeting Local Businesses",
-    description: "Attackers impersonating ComEd are sending malicious emails to businesses in the Chicago area. Learn what to watch for.",
-    date: "2025-04-09",
-    link: "/news/1",
-    category: "Phishing"
-  },
-  {
-    id: 2,
-    title: "Critical Windows Vulnerability Patched",
-    description: "Microsoft released an emergency patch for a zero-day vulnerability being actively exploited. Update systems immediately.",
-    date: "2025-04-08",
-    link: "/news/2",
-    category: "Vulnerabilities"
-  },
-  {
-    id: 3,
-    title: "Ransomware Attack Affects Local Healthcare Provider",
-    description: "A Chicago-based healthcare provider is recovering from a targeted ransomware attack that impacted patient scheduling systems.",
-    date: "2025-04-07",
-    link: "/news/3",
-    category: "Ransomware"
-  },
-  {
-    id: 4,
-    title: "Chicago Tech Summit to Feature Cybersecurity Track",
-    description: "The annual Chicago Tech Summit announced a dedicated cybersecurity track with speakers from leading organizations. Registration is now open.",
-    date: "2025-04-06",
-    link: "/news/4",
+    title: "Chicago Cybersecurity Summit Convenes Industry Leaders",
+    description: "The 10th Edition of the Chicago Cybersecurity Summit was held on April 4, 2025, bringing together executives and experts to discuss emerging threats and solutions.",
+    date: "2025-04-04",
+    link: "https://cybersecuritysummit.com/summit/chicago25-april/",
     category: "Events"
   },
   {
+    id: 2,
+    title: "Midwest Cyber Security Alliance Discusses Data Breach Trends",
+    description: "On April 9, 2025, the Midwest Cyber Security Alliance hosted a meeting focusing on recent data breach trends and enforcement actions.",
+    date: "2025-04-09",
+    link: "https://www.midwestcyber.org/events/cyber-litigation-and-enforcement-trends",
+    category: "Events"
+  },
+  {
+    id: 3,
+    title: "SRAM Investigates Cybersecurity Incident",
+    description: "Chicago-based bicycle component manufacturer SRAM is investigating an IT systems outage caused by a potential cybersecurity issue.",
+    date: "2025-04-01",
+    link: "https://www.bicycleretailer.com/industry-news/2025/04/01/sram-still-investigating-cybersecurity-issue",
+    category: "Incidents"
+  },
+  {
+    id: 4,
+    title: "SuperCom Expands Electronic Monitoring in Midwest",
+    description: "SuperCom has secured a contract to introduce its electronic monitoring technology into Wisconsin, Minnesota, and Michigan.",
+    date: "2025-04-10",
+    link: "https://www.stocktitan.net/news/SPCB/super-com-signs-new-contract-with-midwestern-electronic-monitoring-gz9they6zpdh.html",
+    category: "Business"
+  },
+  {
     id: 5,
-    title: "CISA Issues Alert for Critical Infrastructure in Midwest",
-    description: "CISA has issued a regional alert regarding potential cyber threats targeting critical infrastructure in the Midwest, including Chicago area utilities.",
-    date: "2025-04-05",
-    link: "/news/5",
-    category: "Alerts"
+    title: "High Wire Networks Anticipates Surge in Cyberwarfare Amid Trade Tensions",
+    description: "Batavia-based High Wire Networks expects increased demand for cybersecurity solutions due to escalating global tariff tensions.",
+    date: "2025-04-10",
+    link: "https://www.stocktitan.net/news/HWNI/high-wire-networks-overwatch-cybersecurity-unit-anticipates-surge-in-pk63372jsnyl.html",
+    category: "Business"
   },
   {
     id: 6,
-    title: "Chicago PD Expands Cyber Crime Unit",
-    description: "The Chicago Police Department announced the expansion of its Cyber Crime Unit to better address the growing number of digital crimes affecting residents.",
-    date: "2025-04-04",
-    link: "/news/6",
-    category: "Local"
+    title: "Minnesota's IT Head Warns of Cybersecurity Funding Cuts",
+    description: "Minnesota's top IT official warns that a pause or cancellation of federal cybersecurity funding could leave local entities vulnerable.",
+    date: "2025-04-02",
+    link: "https://www.axios.com/local/twin-cities/2025/04/02/minnesota-cybersecurity-funding-freeze",
+    category: "Policy"
   },
   {
     id: 7,
-    title: "Local University Launches Cybersecurity Scholarship Program",
-    description: "A major Chicago university has launched a new scholarship program aimed at increasing diversity in cybersecurity education and careers.",
-    date: "2025-04-03",
-    link: "/news/7",
+    title: "University of Chicago Study Reveals Gaps in Cybersecurity Training",
+    description: "A new study from the University of Chicago highlights deficiencies in common types of cybersecurity training programs.",
+    date: "2025-04-01",
+    link: "https://physicalsciences.uchicago.edu/news/article/new-study-reveals-gaps-in-common-types-of-cybersecurity-training/",
     category: "Education"
   },
   {
     id: 8,
-    title: "DDoS Attacks Disrupt Chicago Transit Authority Website",
-    description: "The CTA website experienced intermittent outages due to distributed denial-of-service attacks. No operational systems were affected.",
-    date: "2025-04-02",
-    link: "/news/8",
-    category: "Attacks"
+    title: "Illinois Public Sector Cybersecurity Summit Announced",
+    description: "The Illinois Public Sector Cybersecurity Summit is scheduled to address challenges faced by government IT security professionals.",
+    date: "2025-04-10",
+    link: "https://events.govtech.com/Illinois-Public-Sector-Cybersecurity-Summit.html",
+    category: "Events"
   }
 ];
+
 
 // Extract unique categories for filter
 const categories = Array.from(new Set(newsItems.map(item => item.category)));

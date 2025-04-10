@@ -27,89 +27,89 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 
-// Mock data
 const resources = [
   {
     id: 1,
-    title: "Chicago Cybersecurity Resource Guide",
-    description: "A comprehensive guide to cybersecurity resources available in the Chicago area, including government services, educational programs, and community organizations.",
-    type: "pdf",
-    link: "#",
-    category: "Guides"
+    title: "CISA Region 5 Office - Chicago",
+    description: "Contact information and services provided by the Cybersecurity and Infrastructure Security Agency's Region 5 office, covering Illinois and surrounding states.",
+    type: "link",
+    link: "https://www.cisa.gov/about/regions/region-5",
+    category: "Government"
   },
   {
     id: 2,
-    title: "CISA Regional Office - Chicago",
-    description: "Contact information and services provided by the Cybersecurity and Infrastructure Security Agency's Chicago regional office.",
+    title: "Illinois Data Breach Reporting Requirements",
+    description: "Guidelines and legal requirements for reporting data breaches in Illinois, provided by the Illinois Attorney General's Office.",
     type: "link",
-    link: "https://www.cisa.gov/",
-    category: "Government"
+    link: "https://illinoisattorneygeneral.gov/consumer-protection/for-businesses/data-breach/",
+    category: "Legal"
   },
   {
     id: 3,
-    title: "Incident Response Template for Small Businesses",
-    description: "A customizable template for developing an incident response plan tailored to small businesses in the Chicago area.",
-    type: "doc",
-    link: "#",
-    category: "Templates"
+    title: "Loyola University Chicago Cybersecurity Resources",
+    description: "A compilation of cybersecurity resources including scholarship opportunities, competitions, conferences, and certifications.",
+    type: "link",
+    link: "https://www.luc.edu/ccpc/resources/",
+    category: "Education"
   },
   {
     id: 4,
-    title: "Chicago Threat Intelligence Sharing Protocol",
-    description: "Documentation on how to participate in the local threat intelligence sharing initiative, including technical requirements and participation guidelines.",
-    type: "pdf",
-    link: "#",
-    category: "Protocols"
-  },
-  {
-    id: 5,
-    title: "Illinois Attorney General - Data Breach Reporting",
-    description: "Official information on data breach reporting requirements for organizations operating in Illinois.",
+    title: "Illinois Department of Innovation & Technology Cybersecurity Resources",
+    description: "Resources offered to the public and local governments to enhance cybersecurity awareness and practices.",
     type: "link",
-    link: "https://illinoisattorneygeneral.gov/",
+    link: "https://doit.illinois.gov/initiatives/cybersecurity/resources.html",
     category: "Government"
   },
   {
-    id: 6,
-    title: "Chicagoland Security Conference Calendar",
-    description: "A regularly updated calendar of cybersecurity conferences, workshops, and training events in the Chicago metropolitan area.",
-    type: "xlsx",
-    link: "#",
+    id: 5,
+    title: "Chicago Cybersecurity Conference 2025",
+    description: "Information about the upcoming Chicago Cybersecurity Conference, including dates, location, and registration details.",
+    type: "link",
+    link: "https://futureconevents.com/events/chicago-il-2025/",
     category: "Events"
   },
   {
+    id: 6,
+    title: "University of Chicago Cybersecurity Bootcamp",
+    description: "Details about the University of Chicago's Cybersecurity Bootcamp, designed to launch careers in cybersecurity.",
+    type: "link",
+    link: "https://digitalskills.uchicago.edu/cybersecurity-bootcamp/",
+    category: "Education"
+  },
+  {
     id: 7,
-    title: "Security Vendor Assessment Questionnaire",
-    description: "A standardized questionnaire for evaluating the security posture of vendors and service providers.",
-    type: "doc",
-    link: "#",
-    category: "Templates"
+    title: "City of Chicago Information Security Policy",
+    description: "The City of Chicago's official information security policies outlining minimum requirements and acceptable behaviors.",
+    type: "link",
+    link: "https://www.chicago.gov/city/en/depts/dti/supp_info/information-security-policy.html",
+    category: "Government"
   },
   {
     id: 8,
-    title: "Chicago ISAC (Information Sharing and Analysis Center)",
-    description: "Information about the local ISAC and how to become a member to participate in threat intelligence sharing.",
+    title: "THOTCON - Chicago's Hacking Conference",
+    description: "Annual nonprofit hacker conference in Chicago, offering talks, workshops, and networking opportunities.",
     type: "link",
-    link: "#",
-    category: "Organizations"
+    link: "https://thotcon.org/",
+    category: "Events"
   },
   {
     id: 9,
-    title: "Cybersecurity Workforce Development Guide",
-    description: "Resources for organizations looking to develop cybersecurity talent within their teams, including local educational programs and internship opportunities.",
-    type: "pdf",
-    link: "#",
-    category: "Guides"
+    title: "Illinois Emergency Management Agency - Office of Homeland Security",
+    description: "Information on Illinois' homeland security initiatives aimed at creating a safer and more resilient state.",
+    type: "link",
+    link: "https://iemaohs.illinois.gov/hs.html",
+    category: "Government"
   },
   {
     id: 10,
-    title: "Chicago Public Sector Security Guidelines",
-    description: "Security guidelines and best practices for public sector organizations in Chicago.",
-    type: "pdf",
-    link: "#",
-    category: "Guidelines"
+    title: "ChiCyberCon - Chicago's Premier Cybersecurity Education Conference",
+    description: "Details about ChiCyberCon, focusing on AI, data, and human-centered cybersecurity.",
+    type: "link",
+    link: "https://chicybercon.com/",
+    category: "Events"
   }
 ];
+
 
 // Extract unique categories and types
 const categories = Array.from(new Set(resources.map(resource => resource.category)));

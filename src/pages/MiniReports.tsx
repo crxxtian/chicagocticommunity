@@ -1,49 +1,49 @@
 
 import { ContentCard } from "@/components/ContentCard";
 
-// Mock data
 const reports = [
   {
-    id: 1,
-    title: "Analysis: Chicago Financial Sector Threat Landscape",
-    description: "Our security researchers analyzed recent threats targeting financial institutions in the Chicagoland area. This report identifies common attack vectors including spear-phishing campaigns targeting executives, credential stuffing attacks against online banking portals, and a rise in supply chain compromises affecting financial technology vendors. We recommend implementing enhanced email authentication protocols, multi-factor authentication, and regular third-party security assessments.",
-    date: "2025-04-06",
-    tags: ["financial", "targeted-attacks"],
-    link: "/mini-reports/1"
+    "id": 1,
+    "title": "Chicago Public Schools Data Breach Exposes Student Information",
+    "description": "In March 2025, Chicago Public Schools (CPS) reported a data breach involving a vendor's server that exposed personal information of approximately 700,000 current and former students. The compromised data included names, dates of birth, genders, and student ID numbers. CPS has notified affected families and is working with law enforcement to investigate the incident.",
+    "date": "2025-03-07",
+    "tags": ["education", "data breach", "student information"],
+    "link": "https://chicago.suntimes.com/education/2025/03/08/cps-data-breach-security-technology"
   },
   {
-    id: 2,
-    title: "Emerging Threat: QR Code Phishing in Public Spaces",
-    description: "Investigation into a new social engineering technique involving fraudulent QR codes placed in public locations around Chicago's downtown area. Attackers are placing malicious QR codes over legitimate ones in popular tourist areas and transit stations. When scanned, these codes direct victims to convincing phishing pages that steal credentials and financial information. The campaign appears to be specifically targeting visitors to Chicago, exploiting their unfamiliarity with local services. Businesses should regularly inspect QR codes on their premises and implement alternative verification methods.",
-    date: "2025-04-05",
-    tags: ["phishing", "social-engineering"],
-    link: "/mini-reports/2"
+    "id": 2,
+    "title": "SRAM Investigates Cybersecurity Incident Affecting IT Systems",
+    "description": "In April 2025, Chicago-based bicycle component manufacturer SRAM experienced an IT systems outage due to a cybersecurity issue. The company engaged external specialists to investigate the incident and assess its impact on operations. While specific details remain undisclosed, SRAM has restored affected systems and continues to monitor for any further issues.",
+    "date": "2025-04-01",
+    "tags": ["manufacturing", "cybersecurity", "IT outage"],
+    "link": "https://www.bicycleretailer.com/industry-news/2025/04/01/sram-still-investigating-cybersecurity-issue"
   },
   {
-    id: 3,
-    title: "Ransomware Trends Affecting Chicagoland Manufacturing",
-    description: "This report examines the increasing ransomware attacks targeting manufacturing companies in the Chicago metropolitan area. Over the past quarter, we've observed a 37% increase in ransomware incidents affecting small to medium-sized manufacturers, particularly those in the automotive and food processing sectors. The threat actors are exploiting vulnerabilities in internet-facing OT systems and legacy infrastructure. The average ransom demand has increased to $350,000, and threat actors are increasingly using double-extortion tactics. We recommend segmenting OT/IT networks, implementing robust backup strategies, and developing incident response plans specific to ransomware scenarios.",
-    date: "2025-04-04",
-    tags: ["ransomware", "manufacturing", "OT"],
-    link: "/mini-reports/3"
+    "id": 3,
+    "title": "RansomHouse Gang Claims Attack on Loretto Hospital",
+    "description": "In March 2025, the RansomHouse cybercriminal group claimed responsibility for a cyberattack on Loretto Hospital in Chicago, alleging the theft of 1.5TB of sensitive data. The hospital is a not-for-profit community-focused healthcare provider offering various medical services. Details about the specific data compromised have not been fully disclosed.",
+    "date": "2025-03-10",
+    "tags": ["healthcare", "ransomware", "data breach"],
+    "link": "https://securityaffairs.com/175187/cyber-crime/ransomhouse-gang-claims-the-hack-of-the-loretto-hospital-in-chicago.html"
   },
   {
-    id: 4,
-    title: "Chicago Public Wi-Fi Security Assessment",
-    description: "Our team conducted security assessments of public Wi-Fi networks across 15 popular locations in Chicago, including coffee shops, libraries, and public squares. Findings indicate that 60% of these networks lacked proper encryption, 45% were vulnerable to man-in-the-middle attacks, and 30% showed evidence of previously deployed rogue access points. Users connecting to these networks are at significant risk of credential theft and data interception. We've reported our findings to the network operators and city officials with recommendations for improving security configurations. Until improvements are made, we recommend Chicago residents use cellular data or personal VPNs when working in public.",
-    date: "2025-04-02",
-    tags: ["wifi", "public-infrastructure", "mitm"],
-    link: "/mini-reports/4"
+    "id": 4,
+    "title": "Skender Construction Reports Ransomware Attack",
+    "description": "In April 2024, Chicago-based Skender Construction disclosed a ransomware attack affecting over 1,000 individuals. The breach potentially exposed personal information, including names, addresses, Social Security numbers, and health information. The company has notified affected individuals and is offering support services.",
+    "date": "2024-04-10",
+    "tags": ["construction", "ransomware", "data breach"],
+    "link": "https://www.constructiondive.com/news/skender-ransomware-attack-chicago-maine/712844/"
   },
   {
-    id: 5,
-    title: "Insider Threat Indicators in Healthcare Settings",
-    description: "Based on recent incidents at Chicago-area healthcare facilities, this report identifies key indicators of insider threats in medical settings. We analyzed patterns from five incidents occurring between January and March 2025, involving data exfiltration and patient record access. Common indicators included after-hours system access, bulk downloading of patient records, and access to records without corresponding patient appointments. We recommend healthcare organizations implement behavioral analytics, strict role-based access controls, and regular privilege reviews. The report includes a MITRE ATT&CK mapping of the techniques observed in these incidents to assist security teams in detection and prevention efforts.",
-    date: "2025-03-28",
-    tags: ["insider-threat", "healthcare", "data-protection"],
-    link: "/mini-reports/5"
+    "id": 5,
+    "title": "Lurie Children's Hospital Suffers Cyberattack",
+    "description": "In February 2024, Lurie Children's Hospital in Chicago experienced a cyberattack that forced the hospital to disconnect its entire network. The incident led to significant disruptions in hospital operations as officials worked to restore systems and ensure patient safety.",
+    "date": "2024-02-02",
+    "tags": ["healthcare", "cyberattack", "network outage"],
+    "link": "https://therecord.media/lurie-childrens-hospital-chicago-cyberattack"
   }
-];
+]
+
 
 const MiniReports = () => {
   return (
@@ -63,7 +63,7 @@ const MiniReports = () => {
             description={report.description}
             date={report.date}
             tags={report.tags}
-            link={report.link}
+            link={`/mini-reports/${report.id}`}
             className="w-full"
           />
         ))}

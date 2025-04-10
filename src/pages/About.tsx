@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,51 +28,50 @@ const About = () => {
       <div className="mb-12">
         <h1 className="text-3xl font-mono font-bold mb-4">About CCTIC</h1>
         <p className="text-muted-foreground">
-          Learn about our mission and how you can get involved.
+          Learn about the purpose behind this project and how you can be part of it.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div>
-          <h2 className="text-xl font-mono font-medium mb-4">Our Mission</h2>
+          <h2 className="text-xl font-mono font-medium mb-4">The Mission</h2>
           <div className="space-y-4 text-muted-foreground">
             <p>
-              The Chicago Cyber Threat Intelligence Community (CCTIC) was founded in 2023 by a group of cybersecurity professionals dedicated to improving the security posture of organizations throughout the Chicagoland area.
+              The Chicago Cyber Threat Intelligence Community (CCTIC) is an independent project run by a cybersecurity analyst based in Chicago. It’s built with the goal of making threat intelligence and security insights more accessible to professionals, small organizations, and the broader public in the Chicagoland area.
             </p>
             <p>
-              Our mission is to facilitate the sharing of actionable threat intelligence, best practices, and security resources among organizations of all sizes in Chicago and the surrounding suburbs. We believe that a collaborative approach to cybersecurity benefits the entire community and helps build resilience against evolving threats.
-            </p>
-            <p>
-              Through our platform, we aim to:
+              While this platform is maintained by one person, the vision is collaborative. CCTIC is here to elevate local cybersecurity efforts by:
             </p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Provide timely and relevant cybersecurity news and alerts specific to our region</li>
-              <li>Facilitate the sharing of threat intelligence in an accessible format</li>
-              <li>Create opportunities for security professionals to network and collaborate</li>
-              <li>Support smaller organizations that may have limited security resources</li>
-              <li>Strengthen the overall cybersecurity ecosystem in the Chicago metropolitan area</li>
+              <li>Highlighting regional cybersecurity news and incidents</li>
+              <li>Publishing brief, informative mini-reports and alerts</li>
+              <li>Curating valuable resources for professionals and organizations</li>
+              <li>Supporting smaller orgs that lack dedicated security teams</li>
+              <li>Creating a space for knowledge-sharing and discussion</li>
             </ul>
           </div>
 
-          <h2 className="text-xl font-mono font-medium mt-8 mb-4">Get Involved</h2>
+          <h2 className="text-xl font-mono font-medium mt-8 mb-4">Looking to Collaborate</h2>
           <div className="space-y-4 text-muted-foreground">
             <p>
-              CCTIC welcomes participation from all cybersecurity professionals, IT specialists, and organizations in the Chicago area. Here's how you can get involved:
+              If you're a fellow security analyst, researcher, student, or just someone passionate about cybersecurity in the Chicago area — I’d love to hear from you. Collaboration is open.
             </p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Contribute to discussions on our forums</li>
-              <li>Share threat intelligence you've encountered in your organization</li>
-              <li>Submit mini-reports on security trends or incidents</li>
-              <li>Attend our monthly virtual meetups and quarterly in-person events</li>
-              <li>Volunteer to help maintain and grow our resource library</li>
+              <li>Want to contribute a mini-report or blog post?</li>
+              <li>Interested in running a discussion or event?</li>
+              <li>Have threat intelligence or news to share?</li>
+              <li>Have ideas to improve this platform?</li>
             </ul>
+            <p>
+              Let’s make something useful together.
+            </p>
           </div>
         </div>
 
         <div>
-          <h2 className="text-xl font-mono font-medium mb-4">Contact Us</h2>
+          <h2 className="text-xl font-mono font-medium mb-4">Contact</h2>
           <p className="mb-6 text-muted-foreground">
-            Have questions, suggestions, or interested in contributing to CCTIC? Send us a message using the form below.
+            Got questions or want to get involved? Send a message directly using this form:
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

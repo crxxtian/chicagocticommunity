@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, ShieldAlert } from "lucide-react";
+import { FileText, ShieldAlert, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type Victim = {
   victim: string;
@@ -14,18 +15,25 @@ type Victim = {
   claim_url: string;
 };
 
-const Research = () => {
+export default function Research() {
   const [victims, setVictims] = useState<Victim[]>([]);
+  const [sectorFilter, setSectorFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/ransomware")
+    fetch("https://api.ransomware.live/v2/recentvictims")
       .then((res) => res.json())
       .then((data) => {
-        const filtered = data.filter((v: Victim) => v.country === "US");
-        setVictims(filtered.slice(0, 5)); // Show 5 most recent
+        const usOnly = data.filter((v: Victim) => v.country === "US");
+        setVictims(usOnly.slice(0, 30));
       })
       .catch((err) => console.error("Failed to fetch ransomware data", err));
   }, []);
+
+  const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
+
+  const filteredVictims = sectorFilter
+    ? victims.filter((v) => v.activity === sectorFilter)
+    : victims;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
@@ -40,15 +48,39 @@ const Research = () => {
         </p>
       </motion.div>
 
-      {/* Ransomware.live Section */}
       <section>
-        <div className="mb-6">
-          <h2 className="text-2xl font-mono font-semibold">🎯 Recent Ransomware Activity</h2>
-          <p className="text-muted-foreground">Live data pulled from Ransomware.live API</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-mono font-semibold">🎯 Recent Ransomware Activity</h2>
+            <p className="text-muted-foreground">Live data pulled from Ransomware.live API</p>
+          </div>
+
+          {/* Sector Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-9">
+                <Filter className="h-4 w-4 mr-2" />
+                {sectorFilter || "Filter Sector"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setSectorFilter(null)}>
+                All Sectors
+              </DropdownMenuItem>
+              {uniqueSectors.map((sector) => (
+                <DropdownMenuItem
+                  key={sector}
+                  onClick={() => setSectorFilter(sector)}
+                >
+                  {sector}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="space-y-4">
-          {victims.map((v) => (
+          {filteredVictims.map((v) => (
             <div
               key={v.victim}
               className="border border-border p-4 rounded-md bg-secondary/50"
@@ -60,7 +92,7 @@ const Research = () => {
               <p className="text-sm text-muted-foreground">
                 Sector: <strong>{v.activity}</strong> • {v.attackdate}
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-2">
                 <a
                   href={v.claim_url}
                   target="_blank"
@@ -69,6 +101,11 @@ const Research = () => {
                 >
                   View breach record
                 </a>
+                {v.claim_url?.includes(".onion") && (
+                  <Badge variant="destructive" className="text-[11px]">
+                    .onion link
+                  </Badge>
+                )}
               </div>
             </div>
           ))}
@@ -134,6 +171,4 @@ const Research = () => {
       </section>
     </div>
   );
-};
-
-export default Research;
+}

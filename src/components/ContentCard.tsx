@@ -2,12 +2,14 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface ContentCardProps {
   title: string;
   description: string;
   link?: string;
   date?: string;
+  badge?: string;
   tags?: string[];
   className?: string;
 }
@@ -17,6 +19,7 @@ export function ContentCard({
   description, 
   link, 
   date, 
+  badge,
   tags,
   className 
 }: ContentCardProps) {
@@ -28,18 +31,23 @@ export function ContentCard({
           {date && <span className="text-xs text-muted-foreground">{date}</span>}
         </div>
         <p className="text-sm text-muted-foreground">{description}</p>
-        {tags && tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
+        <div className="flex flex-wrap gap-2">
+          {badge && (
+            <Badge variant="secondary" className="text-xs">
+              {badge}
+            </Badge>
+          )}
+          {tags && tags.length > 0 && 
+            tags.map((tag) => (
               <span 
                 key={tag} 
                 className="inline-flex items-center px-2 py-1 text-xs rounded-md bg-accent text-accent-foreground"
               >
                 {tag}
               </span>
-            ))}
-          </div>
-        )}
+            ))
+          }
+        </div>
         {link && (
           <div className="flex items-center text-sm font-medium pt-2">
             Read more

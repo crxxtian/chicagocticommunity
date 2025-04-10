@@ -130,20 +130,6 @@ const Index = () => {
         </div>
       </HomeSection>
 
-      {/* 🔹 Discussions */}
-      <HomeSection title="Discussion Highlights" linkTo="/discussions">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {discussions.map((discussion) => (
-            <ContentCard
-              key={discussion.id}
-              title={discussion.title}
-              description={discussion.description}
-              link={discussion.link}
-            />
-          ))}
-        </div>
-      </HomeSection>
-
       {/* 🔹 Footer animation */}
       <CyberFooterPulse />
     </div>

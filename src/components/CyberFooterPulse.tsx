@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 export const CyberFooterPulse = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>(0);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -15,10 +17,10 @@ export const CyberFooterPulse = () => {
       canvas.height = canvas.offsetHeight;
     };
 
-    const drawGrid = () => {
-      const spacing = 25;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-      ctx.lineWidth = 1;
+    const drawGrid = (color: string) => {
+      const spacing = 30;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 0.8;
 
       for (let x = 0; x < canvas.width; x += spacing) {
         ctx.beginPath();
@@ -44,30 +46,29 @@ export const CyberFooterPulse = () => {
     };
 
     const animate = () => {
-      ctx.fillStyle = "#000";
+      // Theme-based background
+      ctx.fillStyle = theme === "dark" ? "#090909" : "#f8f8f8";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      drawGrid();
+      // Grid color (subtle)
+      const gridColor = theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.05)";
+      drawGrid(gridColor);
 
-      // Add blip every few frames
-      if (Math.random() < 0.05) {
-        createBlip();
-      }
+      // Occasionally create a new blip
+      if (Math.random() < 0.06) createBlip();
 
-      // Draw blips
+      // Draw and fade blips
       blips.forEach((blip, index) => {
         ctx.beginPath();
         ctx.arc(blip.x, blip.y, blip.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(0, 255, 128, ${blip.alpha})`;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(0, 255, 140, ${blip.alpha})`; // cyber green
+        ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        blip.radius += 1;
-        blip.alpha -= 0.015;
+        blip.radius += 1.2;
+        blip.alpha -= 0.012;
 
-        if (blip.alpha <= 0) {
-          blips.splice(index, 1);
-        }
+        if (blip.alpha <= 0) blips.splice(index, 1);
       });
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -81,17 +82,15 @@ export const CyberFooterPulse = () => {
       cancelAnimationFrame(animationFrameRef.current);
       window.removeEventListener("resize", resizeCanvas);
     };
-  }, []);
+  }, [theme]);
 
   return (
     <canvas
       ref={canvasRef}
+      className="w-full h-40 border-t border-border"
       style={{
-        width: "100%",
-        height: "160px",
         display: "block",
-        backgroundColor: "#000",
-        borderTop: "1px solid #1f1f1f",
+        transition: "background-color 0.4s ease",
       }}
     />
   );

@@ -1,4 +1,3 @@
-// /api/fetch-news.ts
 import Parser from "rss-parser";
 
 const parser = new Parser();
@@ -18,7 +17,7 @@ export default async function handler(req: any, res: any) {
 
     for (const url of sources) {
       const feed = await parser.parseURL(url);
-      items.push(...feed.items);
+      items.push(...(feed.items ?? []));
     }
 
     const filtered = items.filter((item) => {
@@ -29,7 +28,7 @@ export default async function handler(req: any, res: any) {
     const simplified = filtered.slice(0, 20).map((item) => ({
       title: item.title,
       description: item.contentSnippet || "",
-      date: item.pubDate,
+      date: item.pubDate || new Date().toISOString(),
       link: item.link,
       category: item.categories?.[0] || "General",
     }));
@@ -37,7 +36,7 @@ export default async function handler(req: any, res: any) {
     res.setHeader("Cache-Control", "s-maxage=3600");
     res.status(200).json(simplified);
   } catch (err) {
-    console.error(err);
+    console.error("RSS fetch error:", err);
     res.status(500).json({ error: "Failed to fetch or parse RSS feeds" });
   }
 }

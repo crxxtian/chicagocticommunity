@@ -1,6 +1,6 @@
-
 import { ContentCard } from "@/components/ContentCard";
 import { HomeSection } from "@/components/HomeSection";
+import { CyberAnimation } from "@/components/CyberAnimation";
 
 // Mock data
 const latestNews = [
@@ -126,6 +126,8 @@ const Index = () => {
           ))}
         </div>
       </HomeSection>
+      
+      <CyberAnimation />
     </div>
   );
 };

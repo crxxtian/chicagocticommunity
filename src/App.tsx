@@ -13,6 +13,9 @@ import Discussions from "./pages/Discussions";
 import Resources from "./pages/Resources";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import NewsPost from "./pages/NewsPost";
+import MiniReportPost from "./pages/MiniReportPost";
+import DiscussionPost from "./pages/DiscussionPost";
 
 const queryClient = new QueryClient();
 
@@ -29,8 +32,11 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/news" element={<News />} />
+                <Route path="/news/:id" element={<NewsPost />} />
                 <Route path="/mini-reports" element={<MiniReports />} />
+                <Route path="/mini-reports/:id" element={<MiniReportPost />} />
                 <Route path="/discussions" element={<Discussions />} />
+                <Route path="/discussions/:id" element={<DiscussionPost />} />
                 <Route path="/resources" element={<Resources />} />
                 <Route path="/about" element={<About />} />
                 <Route path="*" element={<NotFound />} />

@@ -20,7 +20,7 @@ export default function Research() {
   const [sectorFilter, setSectorFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("https://api.ransomware.live/v2/recentvictims")
+    fetch("/api/ransomware")
       .then((res) => res.json())
       .then((data) => {
         const usOnly = data.filter((v: Victim) => v.country === "US");

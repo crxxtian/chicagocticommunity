@@ -6,7 +6,7 @@ const Logo = () => {
       <img
         src="/cctic.svg"
         alt="CCTIC Logo"
-        className="h-20 sm:h-12 w-auto object-contain transition-transform duration-200 hover:scale-[1.03] dark:invert"
+        className="h-12 sm:h-14 lg:h-16 w-auto object-contain transition-transform duration-200 hover:scale-[1.05] dark:invert"
       />
     </Link>
   );

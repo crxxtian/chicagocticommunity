@@ -30,7 +30,6 @@ const latestNews = [
   },
 ];
 
-
 const miniReports = [
   {
     id: 1,
@@ -52,25 +51,20 @@ const miniReports = [
   },
 ];
 
-// ✅ Discussion previews
-const discussions = [
+const threatProfiles = [
   {
     id: 1,
-    title: "Addressing Cybersecurity Challenges in the Manufacturing Sector",
-    description: "Strategies to mitigate cybersecurity risks in manufacturing, post-SRAM incident.",
-    link: "/discussions/1",
+    title: "RansomHouse Targets Chicago Healthcare",
+    description:
+      "RansomHouse claimed a March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of patient data.",
+    link: "/research",
   },
   {
     id: 2,
-    title: "Enhancing Cybersecurity Training Programs",
-    description: "Approaches to close training gaps across Chicagoland orgs and institutions.",
-    link: "/discussions/2",
-  },
-  {
-    id: 3,
-    title: "Preparing for Emerging Cyber Threats",
-    description: "Proactive community collaboration to defend against evolving threat actors.",
-    link: "/discussions/3",
+    title: "LockBit’s Midwest Manufacturing Victims",
+    description:
+      "LockBit ransomware continues to target manufacturers in Illinois and nearby states.",
+    link: "/research",
   },
 ];
 
@@ -88,7 +82,9 @@ const Index = () => {
           Chicago Cyber Threat Intelligence Community
         </motion.h1>
         <p className="text-lg font-medium text-muted-foreground">
-          <strong>CCTIC is a hub for local collaboration, intel sharing, and defense strategy in the Chicagoland area.</strong>
+          <strong>
+            CCTIC is a hub for local collaboration, intel sharing, and defense strategy in the Chicagoland area.
+          </strong>
         </p>
       </div>
 
@@ -125,6 +121,20 @@ const Index = () => {
               date={report.date}
               tags={report.tags}
               link={report.link}
+            />
+          ))}
+        </div>
+      </HomeSection>
+
+      {/* 🔹 Research Spotlights */}
+      <HomeSection title="Threat Actor Spotlights" linkTo="/research">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {threatProfiles.map((profile) => (
+            <ContentCard
+              key={profile.id}
+              title={profile.title}
+              description={profile.description}
+              link={profile.link}
             />
           ))}
         </div>

@@ -11,16 +11,33 @@ const About = () => {
     message: ""
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    toast.success("Message sent successfully!");
-    setFormData({ name: "", email: "", message: "" });
+    setLoading(true);
+
+    const response = await fetch("https://formspree.io/f/mgvarrpn", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(formData)
+    });
+
+    setLoading(false);
+
+    if (response.ok) {
+      toast.success("Message sent successfully!");
+      setFormData({ name: "", email: "", message: "" });
+    } else {
+      toast.error("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -79,12 +96,12 @@ const About = () => {
               <label htmlFor="name" className="block text-sm font-medium mb-1">
                 Name
               </label>
-              <Input 
-                id="name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleChange} 
-                required 
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -92,13 +109,13 @@ const About = () => {
               <label htmlFor="email" className="block text-sm font-medium mb-1">
                 Email
               </label>
-              <Input 
-                id="email" 
-                name="email" 
-                type="email" 
-                value={formData.email} 
-                onChange={handleChange} 
-                required 
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -106,18 +123,18 @@ const About = () => {
               <label htmlFor="message" className="block text-sm font-medium mb-1">
                 Message
               </label>
-              <Textarea 
-                id="message" 
-                name="message" 
-                rows={5} 
-                value={formData.message} 
-                onChange={handleChange} 
-                required 
+              <Textarea
+                id="message"
+                name="message"
+                rows={5}
+                value={formData.message}
+                onChange={handleChange}
+                required
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Send Message
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending..." : "Send Message"}
             </Button>
           </form>
         </div>

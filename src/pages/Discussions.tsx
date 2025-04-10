@@ -1,5 +1,18 @@
-
+import { useState, useEffect } from "react";
 import { ContentCard } from "@/components/ContentCard";
+import { Input } from "@/components/ui/input";
+import { Search, MessageSquare } from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Mock data
 const discussions = [
@@ -84,7 +97,40 @@ const groupedDiscussions = discussions.reduce((acc, discussion) => {
   return acc;
 }, {} as Record<string, typeof discussions>);
 
+// Extract unique categories
+const categories = Object.keys(groupedDiscussions);
+
 const Discussions = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [filteredDiscussions, setFilteredDiscussions] = useState<typeof discussions>([]);
+  
+  // Apply filters
+  useEffect(() => {
+    let result: typeof discussions = [];
+    
+    // If a category is selected, only show items from that category
+    if (activeCategory) {
+      result = groupedDiscussions[activeCategory] || [];
+    } else {
+      // Otherwise, show all discussions
+      result = discussions;
+    }
+    
+    // Apply search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        item => 
+          item.title.toLowerCase().includes(query) || 
+          item.description.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredDiscussions(result);
+  }, [searchQuery, activeCategory]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -94,21 +140,94 @@ const Discussions = () => {
         </p>
       </div>
       
-      {Object.entries(groupedDiscussions).map(([category, discussions]) => (
-        <div key={category} className="mb-10">
-          <h2 className="text-xl font-mono font-medium mb-4">{category}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {discussions.map((discussion) => (
-              <ContentCard
-                key={discussion.id}
-                title={discussion.title}
-                description={discussion.description}
-                link={discussion.link}
-              />
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+        <Input 
+          placeholder="Search discussions..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      
+      {/* Categories Navigation */}
+      <div className="mb-8">
+        <NavigationMenu>
+          <NavigationMenuList className="flex-wrap">
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  activeCategory === null && "bg-accent text-accent-foreground"
+                )}
+                onClick={() => setActiveCategory(null)}
+              >
+                All Topics
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            
+            {categories.map((category) => (
+              <NavigationMenuItem key={category}>
+                <NavigationMenuTrigger
+                  className={cn(
+                    activeCategory === category && "bg-accent text-accent-foreground"
+                  )}
+                  onClick={() => setActiveCategory(category)}
+                >
+                  {category}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4">
+                    <li className="row-span-3">
+                      <ScrollArea className="h-[200px]">
+                        <div className="p-2">
+                          <div className="font-mono text-sm mb-2 flex items-center">
+                            <MessageSquare className="h-4 w-4 mr-2 text-indigo-500" />
+                            {category} Discussions
+                          </div>
+                          {groupedDiscussions[category].map((discussion) => (
+                            <NavigationMenuLink
+                              key={discussion.id}
+                              href={discussion.link}
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            >
+                              <div className="text-sm font-medium leading-none">{discussion.title}</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {discussion.description}
+                              </p>
+                            </NavigationMenuLink>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </li>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
             ))}
-          </div>
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+      
+      {/* Discussion Cards */}
+      {filteredDiscussions.length === 0 ? (
+        <div className="text-center py-12 border border-dashed rounded-md">
+          <p className="text-muted-foreground">No discussions found matching your criteria.</p>
         </div>
-      ))}
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredDiscussions.map((discussion) => (
+            <ContentCard
+              key={discussion.id}
+              title={discussion.title}
+              description={discussion.description}
+              link={discussion.link}
+              badge={discussion.category}
+              className="hover:shadow-md transition-shadow duration-200 border-l-4 border-l-indigo-400 dark:border-l-indigo-600 hover:border-indigo-500 dark:hover:border-indigo-400 animate-in fade-in duration-300"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -18,7 +18,7 @@ const Research = () => {
   const [victims, setVictims] = useState<Victim[]>([]);
 
   useEffect(() => {
-    fetch("https://api.ransomware.live/v2/recentvictims")
+    fetch("/api/ransomware")
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.filter((v: Victim) => v.country === "US");

@@ -1,4 +1,7 @@
-// api/fetch-news.ts
+export const config = {
+  runtime: 'edge',
+};
+
 import Parser from 'rss-parser';
 
 const parser = new Parser();

@@ -1,52 +1,51 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Parser from 'rss-parser';
+export default async function handler(req: Request): Promise<Response> {
+  const apiKey = process.env.NEWSAPI_KEY;
 
-const parser = new Parser();
-
-const sources = [
-  'https://feeds.feedburner.com/TheHackersNews',
-  'https://www.bleepingcomputer.com/feed/',
-  'https://www.cisa.gov/news.xml',
-  'https://www.govtech.com/rss/category/cybersecurity.rss',
-];
-
-const keywords = [
-  'cybersecurity', 'breach', 'ransomware', 'data leak', 'zero-day',
-  'APT', 'CISA', 'Illinois', 'Midwest', 'Chicago', 'USA', 'gov',
-];
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    const results = await Promise.allSettled(
-      sources.map((url) => parser.parseURL(url))
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: "Missing NEWSAPI_KEY environment variable" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
     );
+  }
 
-    const items = results
-      .filter((r): r is PromiseFulfilledResult<Parser.Output<any>> => r.status === 'fulfilled')
-      .flatMap((r) => r.value.items || []);
+  const query = "cybersecurity OR ransomware OR data breach OR hacking";
+  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=20`;
 
-    const filtered = items.filter((item) => {
-      const content = `${item.title ?? ''} ${item.contentSnippet ?? ''}`.toLowerCase();
-      return keywords.some((kw) => content.includes(kw.toLowerCase()));
+  try {
+    const apiRes = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+      },
     });
 
-    const deduped = Array.from(
-      new Map(filtered.map((item) => [item.link, item])).values()
-    );
+    const data = await apiRes.json();
 
-    const simplified = deduped.slice(0, 20).map((item) => ({
-      title: item.title || 'Untitled',
-      description: item.contentSnippet || '',
-      date: item.pubDate || '',
-      link: item.link || '',
-      category: item.categories?.[0] || 'General',
+    const simplified = (data.articles || []).map((item: any) => ({
+      title: item.title,
+      description: item.description,
+      date: item.publishedAt,
+      link: item.url,
+      category: item.source.name,
     }));
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=3600');
-    res.status(200).json(simplified);
+    return new Response(JSON.stringify(simplified), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "s-maxage=3600",
+      },
+    });
   } catch (err: any) {
-    console.error('News API error:', err);
-    res.status(500).json({ error: err.message || 'Internal Server Error' });
+    console.error("News API error:", err);
+    return new Response(JSON.stringify({ error: "Failed to fetch news" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 }

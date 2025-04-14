@@ -1,34 +1,16 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ContentCard } from "@/components/ContentCard";
 import { HomeSection } from "@/components/HomeSection";
 import { CyberFooterPulse } from "@/components/CyberFooterPulse";
 
-const latestNews = [
-  {
-    id: 1,
-    title: "Avoid Those Road Toll Texts! Officials Issue Warnings About Smishing Scam",
-    description:
-      "Officials have issued a warning about a growing smishing scam targeting Chicago-area tollway customers. The scam sends fraudulent texts asking for payment information.",
-    date: "2025-03-13",
-    link: "https://news.wttw.com/2025/03/13/don-t-click-those-road-toll-texts-officials-issue-warnings-about-smishing-scam",
-  },
-  {
-    id: 2,
-    title: "AkiraBot Targets 420,000 Sites with OpenAI-Generated Spam, Bypassing CAPTCHA Protections",
-    description:
-      "Researchers disclosed AkiraBot, an AI-powered spamming system that bypasses CAPTCHAs and targets over 420,000 websites globally.",
-    date: "2025-04-10",
-    link: "https://thehackernews.com/2025/04/akirabot-targets-420000-sites-with.html",
-  },
-  {
-    id: 3,
-    title: "Congress Faces Crucial Decision on Cybersecurity Information Sharing Act Renewal",
-    description:
-      "A Congressional Research Service report warns of potential lapses as the Cybersecurity Information Sharing Act nears expiration in September.",
-    date: "2025-04-10",
-    link: "https://industrialcyber.co/news/congress-faces-crucial-decision-on-renewing-cybersecurity-information-sharing-act-before-september-expiry-crs-reports/",
-  },
-];
+type NewsItem = {
+  title: string;
+  description: string;
+  date: string;
+  link: string;
+  category: string;
+};
 
 const miniReports = [
   {
@@ -69,9 +51,18 @@ const threatProfiles = [
 ];
 
 const Index = () => {
+  const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
+
+  useEffect(() => {
+    fetch("/api/fetch-news")
+      .then((res) => res.json())
+      .then((data: NewsItem[]) => setLatestNews(data.slice(0, 3))) // only show 3
+      .catch((err) => console.error("Failed to load latest news", err));
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* 🔹 Title & intro */}
+      {/* Title & intro */}
       <div className="mb-12 max-w-3xl">
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
@@ -88,29 +79,34 @@ const Index = () => {
         </p>
       </div>
 
-      {/* 🔹 Welcome banner */}
+      {/* Welcome banner */}
       <div className="mb-10 p-6 border border-border rounded-md bg-secondary/30">
         <p className="font-medium text-muted-foreground">
           <strong>Welcome.</strong> Our mission is to improve Chicagoland’s cyber resilience through real-time threat sharing, expert analysis, and a local-first approach to community defense.
         </p>
       </div>
 
-      {/* 🔹 News */}
+      {/* News */}
       <HomeSection title="Latest News" linkTo="/news">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {latestNews.map((news) => (
-            <ContentCard
-              key={news.id}
-              title={news.title}
-              description={news.description}
-              date={news.date}
-              link={news.link}
-            />
-          ))}
-        </div>
+        {latestNews.length === 0 ? (
+          <p className="text-muted-foreground">Loading news...</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {latestNews.map((news, i) => (
+              <ContentCard
+                key={i}
+                title={news.title}
+                description={news.description}
+                date={news.date}
+                link={news.link}
+                badge={news.category}
+              />
+            ))}
+          </div>
+        )}
       </HomeSection>
 
-      {/* 🔹 Mini Reports */}
+      {/* Mini Reports */}
       <HomeSection title="Recent Mini-Reports" linkTo="/mini-reports">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {miniReports.map((report) => (
@@ -126,7 +122,7 @@ const Index = () => {
         </div>
       </HomeSection>
 
-      {/* 🔹 Research Spotlights */}
+      {/* Research Spotlights */}
       <HomeSection title="Threat Actor Spotlights" linkTo="/research">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {threatProfiles.map((profile) => (
@@ -140,7 +136,7 @@ const Index = () => {
         </div>
       </HomeSection>
 
-      {/* 🔹 Footer animation */}
+      {/* Footer animation */}
       <CyberFooterPulse />
     </div>
   );

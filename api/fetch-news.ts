@@ -1,62 +1,73 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import Parser from "rss-parser";
-
-const parser = new Parser();
-
-const sources = [
-  "https://feeds.feedburner.com/TheHackersNews",
-  "https://www.bleepingcomputer.com/feed/",
-  "https://www.govtech.com/rss/category/cybersecurity.rss",
-  "https://www.cisa.gov/news.xml",
-];
-
-const keywords = ["chicago", "illinois", "midwest", "cyber", "breach", "attack"];
-
-type NewsItem = {
-  title: string;
-  description: string;
-  date: string;
-  link: string;
-  category: string;
+export const config = {
+  runtime: 'edge',
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+const sources = [
+  'https://feeds.feedburner.com/TheHackersNews',
+  'https://www.bleepingcomputer.com/feed/',
+  'https://www.cisa.gov/news.xml',
+  'https://www.govtech.com/rss/category/cybersecurity.rss',
+];
+
+const keywords = [
+  'cybersecurity', 'breach', 'ransomware', 'data leak', 'zero-day',
+  'APT', 'CISA', 'Illinois', 'Midwest', 'Chicago', 'USA', 'gov'
+];
+
+export default async function handler(req: Request): Promise<Response> {
   try {
-    let items: any[] = [];
+    const feedResults = await Promise.allSettled(
+      sources.map(url => fetch(url).then(res => res.text()))
+    );
 
-    // Fetch feeds in parallel
-    const fetchPromises = sources.map((url) => parser.parseURL(url));
-    const feeds = await Promise.allSettled(fetchPromises);
+    const items: any[] = [];
 
-    for (const result of feeds) {
-      if (result.status === "fulfilled" && result.value?.items) {
-        items.push(...result.value.items);
-      } else if (result.status === "rejected") {
-        console.warn("Failed to fetch a feed:", result.reason); // TypeScript now knows `reason` exists
+    for (const result of feedResults) {
+      if (result.status === 'fulfilled') {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(result.value, 'text/xml');
+        const entries = xmlDoc.querySelectorAll('item');
+
+        entries.forEach((entry) => {
+          items.push({
+            title: entry.querySelector('title')?.textContent || '',
+            link: entry.querySelector('link')?.textContent || '',
+            description: entry.querySelector('description')?.textContent || '',
+            pubDate: entry.querySelector('pubDate')?.textContent || '',
+            category: entry.querySelector('category')?.textContent || 'General',
+          });
+        });
       }
     }
 
-    // Keyword filtering
+    // Filter
     const filtered = items.filter((item) => {
-      const content = `${item.title ?? ""} ${item.contentSnippet ?? ""}`.toLowerCase();
-      return keywords.some((kw) => content.includes(kw));
+      const content = `${item.title} ${item.description}`.toLowerCase();
+      return keywords.some((kw) => content.includes(kw.toLowerCase()));
     });
 
-    // Format output
-    const simplified: NewsItem[] = filtered.slice(0, 20).map((item) => ({
-      title: item.title || "No Title",
-      description: item.contentSnippet || "",
-      date: item.pubDate || "",
-      link: item.link || "",
-      category: item.categories?.[0] || "General",
-    }));
+    // Deduplicate + Slice
+    const unique = Array.from(new Map(filtered.map((i) => [i.link, i])).values());
+    const topItems = unique.slice(0, 20);
 
-    // Send response
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cache-Control", "s-maxage=3600");
-    res.status(200).json(simplified);
+    return new Response(JSON.stringify(topItems), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   } catch (err: any) {
-    console.error("Fetch-News Error:", err.message, err.stack);
-    res.status(500).json({ error: "Failed to fetch or parse RSS feeds", details: err.message });
+    console.error('News API error:', err);
+    return new Response(
+      JSON.stringify({ error: err.message || 'Internal Error' }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
   }
 }

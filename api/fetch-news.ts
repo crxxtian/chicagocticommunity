@@ -1,9 +1,8 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
 import NewsAPI from 'newsapi';
 
 const newsapi = new NewsAPI(process.env.NEWSAPI_KEY || '');
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (!process.env.NEWSAPI_KEY) {
     return res.status(500).json({ error: 'Missing NEWSAPI_KEY in environment' });
   }

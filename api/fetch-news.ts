@@ -1,10 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Parser from 'rss-parser';
 
-export const config = {
-  runtime: 'nodejs',
-};
-
 const parser = new Parser();
 
 const sources = [

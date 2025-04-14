@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .flatMap((r) => r.value.items || []);
 
     const filtered = items.filter((item) => {
-      const content = `${item.title} ${item.contentSnippet}`.toLowerCase();
+      const content = `${item.title ?? ''} ${item.contentSnippet ?? ''}`.toLowerCase();
       return keywords.some((kw) => content.includes(kw.toLowerCase()));
     });
 
@@ -50,4 +50,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }
-// Hi

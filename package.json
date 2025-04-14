@@ -11,6 +11,7 @@
     "update:news": "ts-node --loader ts-node/esm scripts/fetch-news.ts"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

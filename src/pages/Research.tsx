@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import Modal from "@/components/Modal";  // import the Modal component
 import { motion } from "framer-motion";
-import { FileText, ShieldAlert, Filter } from "lucide-react";
+import { ShieldAlert, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 type Victim = {
   victim: string;
@@ -18,6 +18,8 @@ type Victim = {
 export default function Research() {
   const [victims, setVictims] = useState<Victim[]>([]);
   const [sectorFilter, setSectorFilter] = useState<string | null>(null);
+  const [selectedActor, setSelectedActor] = useState<any>(null); // State for selected actor
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/ransomware")
@@ -34,6 +36,16 @@ export default function Research() {
   const filteredVictims = sectorFilter
     ? victims.filter((v) => v.activity === sectorFilter)
     : victims;
+
+  const openModal = (actor: any) => {
+    setSelectedActor(actor);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedActor(null);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
@@ -106,13 +118,18 @@ export default function Research() {
                     .onion link
                   </Badge>
                 )}
+                <Button
+                  variant="link"
+                  className="text-sm text-blue-500"
+                  onClick={() => openModal(v)}
+                >
+                  View Details
+                </Button>
               </div>
             </div>
           ))}
         </div>
       </section>
-
-      <Separator className="my-12" />
 
       {/* Threat Actor Profiles */}
       <section>
@@ -124,7 +141,19 @@ export default function Research() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border border-border p-4 rounded-md bg-muted/20">
+          <div
+            className="border border-border p-4 rounded-md bg-muted/20"
+            onClick={() =>
+              openModal({
+                title: "RansomHouse",
+                description:
+                  "RansomHouse claimed responsibility for the March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of sensitive medical data.",
+                sector: "Healthcare",
+                attackHistory: ["March 2025 - Loretto Hospital Breach"],
+                iocs: ["hxxp://maliciouslink.onion", "MaliciousIP-123.456.78.90"],
+              })
+            }
+          >
             <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
               <ShieldAlert className="h-4 w-4 text-red-500" />
               RansomHouse
@@ -134,41 +163,21 @@ export default function Research() {
             </p>
             <Badge variant="secondary">Healthcare</Badge>
           </div>
-
-          <div className="border border-border p-4 rounded-md bg-muted/20">
-            <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-yellow-500" />
-              LockBit
-            </h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              LockBit remains one of the most active ransomware groups globally. Several manufacturing and logistics companies in the Midwest have been recent victims.
-            </p>
-            <Badge variant="secondary">Manufacturing</Badge>
-          </div>
         </div>
       </section>
 
-      <Separator className="my-12" />
-
-      {/* CTI Education */}
-      <section>
-        <div className="mb-6">
-          <h2 className="text-2xl font-mono font-semibold">📚 What is Cyber Threat Intelligence?</h2>
-        </div>
-        <div className="space-y-4 text-muted-foreground max-w-2xl">
-          <p>
-            CTI is refined insight into cyber threats. Intelligence teams use credible insights from multiple sources to create actionable context on the threat landscape, threat actors and their tactics, techniques, and procedures (TTPs).
-          </p>
-          <ul className="list-disc pl-5">
-            <li><strong>Strategic CTI:</strong> Broad trends for leadership and investment planning.</li>
-            <li><strong>Operational CTI:</strong> Alerts about impending or active threats.</li>
-            <li><strong>Tactical CTI:</strong> TTP-level info for SOC teams and blue team defenders.</li>
-          </ul>
-          <p>
-            The goal: shifting from reactive defense to proactive threat hunting and prevention.
-          </p>
-        </div>
-      </section>
+      {/* Modal */}
+      {selectedActor && (
+        <Modal
+          isOpen={modalOpen}
+          onClose={closeModal}
+          title={selectedActor.title}
+          description={selectedActor.description}
+          sector={selectedActor.sector}
+          attackHistory={selectedActor.attackHistory}
+          iocs={selectedActor.iocs}
+        />
+      )}
     </div>
   );
 }

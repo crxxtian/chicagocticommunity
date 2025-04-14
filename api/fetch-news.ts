@@ -1,85 +1,98 @@
 import NewsAPI from 'newsapi';
+import Parser from 'rss-parser';
 
 const newsapi = new NewsAPI(process.env.NEWSAPI_KEY || '');
+const parser = new Parser();
 
-export default async function handler(req: any, res: any) {
-  if (!process.env.NEWSAPI_KEY) {
-    return res.status(500).json({ error: 'Missing NEWSAPI_KEY in environment' });
-  }
+const keywords = [
+  "cybersecurity", "ransomware", "malware", "zero-day", "exploit",
+  "breach", "leak", "phishing", "ddos", "cve", "vulnerability", "patch",
+  "CISA", "APT", "nation-state", "threat actor", "critical infrastructure",
+  "chicago", "illinois", "school", "hospital", "gov", "municipality"
+];
 
-  try {
-    // Strategic query: local + high-signal cyber
-    const query = `("cybersecurity" OR "ransomware" OR "data breach" OR "CISA") AND (Chicago OR Illinois)`;
+const rssFeeds = [
+  "https://www.cisa.gov/news.xml",
+  "https://www.bleepingcomputer.com/feed/",
+  "https://feeds.feedburner.com/TheHackersNews",
+  "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml"
+];
 
-    const response = await newsapi.v2.everything({
-      q: query,
-      searchIn: 'title,description',
-      language: 'en',
-      sortBy: 'relevancy',
-      pageSize: 30,
-      excludeDomains: 'newsbreak.com,bringatrailer.com,dailymail.co.uk,carbuzz.com',
-    });
-
-    if (response.status !== 'ok') {
-      return res.status(502).json({ error: 'NewsAPI error', details: response });
-    }
-
-    const keywords = [
-      // Threats & Tactics
-      "cybersecurity", "ransomware", "malware", "zero-day", "exploit",
-      "breach", "leak", "phishing", "denial of service", "ddos",
-      "cve", "vulnerability", "rootkit", "backdoor", "supply chain attack",
-
-      // Adversaries
-      "APT", "threat actor", "nation-state", "hacktivist", "cyber gang",
-
-      // Defense & Response
-      "CISA", "FBI", "NSA", "Homeland Security", "patch", "advisory",
-      "response", "mitigation", "takedown", "disruption", "alert", "intel",
-
-      // Regional relevance
-      "Chicago", "Illinois", "Midwest", "Cook County", "US infrastructure",
-
-      // Sectors
-      "hospital", "school", "public sector", "government", "municipality", "energy",
-      "critical infrastructure", "education", "transportation", "manufacturing"
-    ];
-
-    const filtered = response.articles.filter((item) => {
-      const content = `${item.title} ${item.description}`.toLowerCase();
-      return keywords.some((kw) => content.includes(kw));
-    });
-
-    const simplified = filtered.map((item) => {
+function filterRelevantItems(items: any[], source: string) {
+  return items
+    .filter((item) => {
+      const text = `${item.title || ""} ${item.contentSnippet || item.content || ""}`.toLowerCase();
+      return keywords.some((kw) => text.includes(kw));
+    })
+    .map((item) => {
+      const lower = `${item.title} ${item.contentSnippet}`.toLowerCase();
       let category = 'General';
-      const text = `${item.title} ${item.description}`.toLowerCase();
-      if (text.includes('chicago') || text.includes('illinois') || text.includes('midwest')) {
-        category = 'Chicago';
-      } else if (text.includes('cisa')) {
-        category = 'CISA';
-      } else if (text.includes('ransomware')) {
-        category = 'Ransomware';
-      } else if (text.includes('breach')) {
-        category = 'Breach';
-      } else if (text.includes('apt') || text.includes('nation-state')) {
-        category = 'APT';
-      }
+
+      if (source.includes("cisa") || lower.includes("cisa")) category = "CISA";
+      else if (lower.includes("cve") || source.includes("nvd")) category = "CVE";
+      else if (lower.includes("ransomware")) category = "Ransomware";
+      else if (lower.includes("chicago") || lower.includes("illinois")) category = "Chicago";
 
       return {
         title: item.title,
-        description: item.description || '',
+        description: item.contentSnippet || item.content || "",
+        date: item.isoDate || item.pubDate || "",
+        link: item.link,
+        category,
+      };
+    });
+}
+
+export default async function handler(req: any, res: any) {
+  try {
+    // --- NewsAPI ---
+    const newsapiRes = await newsapi.v2.everything({
+      q: '("cybersecurity" OR "ransomware" OR "breach" OR "CISA") AND (Chicago OR Illinois)',
+      searchIn: 'title,description',
+      language: 'en',
+      sortBy: 'relevancy',
+      pageSize: 25,
+      excludeDomains: 'newsbreak.com,carbuzz.com,dailymail.co.uk',
+    });
+
+    const newsapiItems = (newsapiRes.articles || []).filter((a) => {
+      const t = `${a.title} ${a.description}`.toLowerCase();
+      return keywords.some((kw) => t.includes(kw));
+    }).map((item) => {
+      let category = "General";
+      const lower = `${item.title} ${item.description}`.toLowerCase();
+      if (lower.includes("cisa")) category = "CISA";
+      else if (lower.includes("cve")) category = "CVE";
+      else if (lower.includes("ransomware")) category = "Ransomware";
+      else if (lower.includes("chicago") || lower.includes("illinois")) category = "Chicago";
+
+      return {
+        title: item.title,
+        description: item.description || "",
         date: item.publishedAt,
         link: item.url,
         category,
-        image: item.urlToImage || null,
       };
     });
 
+    // --- RSS Feeds ---
+    const rssResults = await Promise.allSettled(
+      rssFeeds.map((url) => parser.parseURL(url))
+    );
+
+    const rssItems = rssResults
+      .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+      .flatMap((r) => filterRelevantItems(r.value.items || [], r.value.link || ""));
+
+    // --- Merge & Deduplicate ---
+    const merged = [...newsapiItems, ...rssItems];
+    const deduped = Array.from(new Map(merged.map(item => [item.link, item])).values());
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 's-maxage=1800');
-    return res.status(200).json(simplified);
+    return res.status(200).json(deduped.slice(0, 30)); // return top 30
   } catch (err: any) {
-    console.error('News fetch error:', err);
-    return res.status(500).json({ error: err.message || 'Unexpected error' });
+    console.error("News Fetch Error:", err);
+    res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

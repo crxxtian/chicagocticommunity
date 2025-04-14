@@ -1,50 +1,43 @@
-import { FC } from "react";
-import { Dialog } from "@headlessui/react";
-import { XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils"; // to handle classnames based on dark/light mode
 
 interface ModalProps {
+  title: string;
+  content: string | React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
-  title: string;
-  description: string;
-  sector: string;
-  attackHistory: string[];
-  iocs: string[];
 }
 
-const Modal: FC<ModalProps> = ({ isOpen, onClose, title, description, sector, attackHistory, iocs }) => {
+const Modal = ({ title, content, isOpen, onClose }: ModalProps) => {
   return (
-    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <Dialog.Panel className="bg-white rounded-lg p-6 w-11/12 sm:w-1/2 max-w-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-mono font-semibold text-xl">{title}</h3>
-          <button onClick={onClose}>
-            <XCircle className="h-6 w-6 text-red-500" />
-          </button>
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300",
+        isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}
+    >
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="relative bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg p-6 max-w-lg w-full space-y-4 shadow-lg overflow-y-auto"
+      >
+        <Button
+          variant="ghost"
+          className="absolute top-2 right-2 p-2"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5 text-gray-500 dark:text-gray-300" />
+        </Button>
+        <div>
+          <h3 className="text-2xl font-mono font-semibold">{title}</h3>
+          <p className="text-sm text-muted-foreground mt-2">{content}</p>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">{description}</p>
-        <Badge variant="secondary">{sector}</Badge>
-
-        <div className="mt-6">
-          <h4 className="font-mono font-semibold text-lg">Attack History:</h4>
-          <ul className="list-disc pl-5 text-sm">
-            {attackHistory.map((event, index) => (
-              <li key={index}>{event}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="mt-6">
-          <h4 className="font-mono font-semibold text-lg">Indicators of Compromise (IOCs):</h4>
-          <ul className="list-disc pl-5 text-sm">
-            {iocs.map((ioc, index) => (
-              <li key={index} className="text-blue-500">{ioc}</li>
-            ))}
-          </ul>
-        </div>
-      </Dialog.Panel>
-    </Dialog>
+      </motion.div>
+    </div>
   );
 };
 

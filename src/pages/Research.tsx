@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import Modal from "@/components/Modal";  // import the Modal component
 import { motion } from "framer-motion";
 import { ShieldAlert, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
+import Modal from "@/components/Modal"; // Modal Component for Detailed View
+import ReactMarkdown from "react-markdown";
 
 type Victim = {
   victim: string;
@@ -15,11 +16,67 @@ type Victim = {
   claim_url: string;
 };
 
+type ThreatActor = {
+  title: string;
+  content: string;
+};
+
 export default function Research() {
   const [victims, setVictims] = useState<Victim[]>([]);
   const [sectorFilter, setSectorFilter] = useState<string | null>(null);
-  const [selectedActor, setSelectedActor] = useState<any>(null); // State for selected actor
-  const [modalOpen, setModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [actorDetails, setActorDetails] = useState<ThreatActor | null>(null);
+
+  const modalContent: Record<string, ThreatActor> = {
+    RansomHouse: {
+      title: "RansomHouse",
+      content: `**RansomHouse** claimed responsibility for the March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of sensitive medical data.
+
+RansomHouse primarily conducts data exfiltration attacks rather than using traditional ransomware. Their tactics have led them to target healthcare organizations like Loretto Hospital in Chicago. The group demands payment for not leaking stolen data.
+
+### Indicators of Compromise (IOCs)
+**Hashes:**
+- SHA256: 2C1475F1B49A8B93A6C6217BE078392925535E084048BF04241E57A711F0F58E
+- SHA256: 549A8BC04C0EA9C622BAC90B0607E3F4FD48CB5610601031E054CC6340F8EBA5
+
+**URLs:**
+- \`XW7AU5PNWTL6LOZBSUDKMYD32N6GNQDNGITJDPPYBUDAN3X3PJGPMPID[.]ONION\`
+- \`HXXP[:]//ZZF6L4WAVAYC2MVBZWETTBLCO2QODVE5SECTJQYWC6FUWKVCVJLUAMYD[.]ONION\`
+
+**File Extensions:**
+- .XVGV, .dump, .vab, .backup, .dmp
+
+**Ransom Notes:**
+- HowToRestore.txt
+
+### Tactics, Techniques, and Procedures (TTPs)
+- Exploits vulnerabilities, uses Mimikatz for credential dumping, and PowerShell for system discovery.`
+    },
+    LockBit: {
+      title: "LockBit",
+      content: `**LockBit** remains one of the most active ransomware groups globally. Several manufacturing and logistics companies in the Midwest have been recent victims.
+
+Known for using the **Ransomware-as-a-Service (RaaS)** model, LockBit attacks have affected multiple sectors. In the Midwest, LockBit targeted companies like CDW and government agencies in Illinois.
+
+### Indicators of Compromise (IOCs)
+**Command Line Parameters:**
+- \`-del\`: Self-delete
+- \`-gdel\`: Remove LockBit 3.0 group policy changes
+
+**File Path Locations:**
+- ADMIN$\\Temp\\<LockBit3.0 Filename>.exe
+- %SystemRoot%\\Temp\\<LockBit3.0 Filename>.exe
+
+**Registry Artifacts:**
+- HKCU\\Control Panel\\Desktop\\WallPaper: (Default) C:\\ProgramData\\<Malware Extension>.bmp
+
+**Mutex:**
+- Global<MD4 hash of machine GUID>
+
+### Tactics, Techniques, and Procedures (TTPs)
+- Known for targeting critical infrastructure, leveraging advanced evasion techniques, and using tools like PowerShell.`
+    },
+  };
 
   useEffect(() => {
     fetch("/api/ransomware")
@@ -32,20 +89,7 @@ export default function Research() {
   }, []);
 
   const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
-
-  const filteredVictims = sectorFilter
-    ? victims.filter((v) => v.activity === sectorFilter)
-    : victims;
-
-  const openModal = (actor: any) => {
-    setSelectedActor(actor);
-    setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setSelectedActor(null);
-  };
+  const filteredVictims = sectorFilter ? victims.filter((v) => v.activity === sectorFilter) : victims;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
@@ -67,7 +111,6 @@ export default function Research() {
             <p className="text-muted-foreground">Live data pulled from Ransomware.live API</p>
           </div>
 
-          {/* Sector Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-9">
@@ -80,10 +123,7 @@ export default function Research() {
                 All Sectors
               </DropdownMenuItem>
               {uniqueSectors.map((sector) => (
-                <DropdownMenuItem
-                  key={sector}
-                  onClick={() => setSectorFilter(sector)}
-                >
+                <DropdownMenuItem key={sector} onClick={() => setSectorFilter(sector)}>
                   {sector}
                 </DropdownMenuItem>
               ))}
@@ -93,10 +133,7 @@ export default function Research() {
 
         <div className="space-y-4">
           {filteredVictims.map((v) => (
-            <div
-              key={v.victim}
-              className="border border-border p-4 rounded-md bg-secondary/50"
-            >
+            <div key={v.victim} className="border border-border p-4 rounded-md bg-secondary/50">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-mono font-medium text-lg">{v.victim}</h3>
                 <Badge variant="outline">{v.group}</Badge>
@@ -105,12 +142,7 @@ export default function Research() {
                 Sector: <strong>{v.activity}</strong> • {v.attackdate}
               </p>
               <div className="pt-2 flex items-center gap-2">
-                <a
-                  href={v.claim_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 text-sm underline"
-                >
+                <a href={v.claim_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-sm underline">
                   View breach record
                 </a>
                 {v.claim_url?.includes(".onion") && (
@@ -118,20 +150,12 @@ export default function Research() {
                     .onion link
                   </Badge>
                 )}
-                <Button
-                  variant="link"
-                  className="text-sm text-blue-500"
-                  onClick={() => openModal(v)}
-                >
-                  View Details
-                </Button>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Threat Actor Profiles */}
       <section>
         <div className="mb-6">
           <h2 className="text-2xl font-mono font-semibold">🕵️ Threat Actor Spotlights</h2>
@@ -141,41 +165,34 @@ export default function Research() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div
-            className="border border-border p-4 rounded-md bg-muted/20"
-            onClick={() =>
-              openModal({
-                title: "RansomHouse",
-                description:
-                  "RansomHouse claimed responsibility for the March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of sensitive medical data.",
-                sector: "Healthcare",
-                attackHistory: ["March 2025 - Loretto Hospital Breach"],
-                iocs: ["hxxp://maliciouslink.onion", "MaliciousIP-123.456.78.90"],
-              })
-            }
-          >
-            <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-red-500" />
-              RansomHouse
-            </h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              RansomHouse claimed responsibility for the March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of sensitive medical data.
-            </p>
-            <Badge variant="secondary">Healthcare</Badge>
-          </div>
+          {Object.keys(modalContent).map((actor) => (
+            <div
+              key={actor}
+              className="border border-border p-4 rounded-md bg-muted/20 cursor-pointer"
+              onClick={() => {
+                setActorDetails(modalContent[actor]);
+                setIsModalOpen(true);
+              }}
+            >
+              <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-red-500" />
+                {modalContent[actor].title}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                {modalContent[actor].content.split("\n")[0]}
+              </p>
+              <Badge variant="secondary">{actor === "RansomHouse" ? "Healthcare" : "Manufacturing"}</Badge>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Modal */}
-      {selectedActor && (
+      {actorDetails && (
         <Modal
-          isOpen={modalOpen}
-          onClose={closeModal}
-          title={selectedActor.title}
-          description={selectedActor.description}
-          sector={selectedActor.sector}
-          attackHistory={selectedActor.attackHistory}
-          iocs={selectedActor.iocs}
+          title={actorDetails.title}
+          content={<ReactMarkdown>{actorDetails?.content}</ReactMarkdown>}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </div>

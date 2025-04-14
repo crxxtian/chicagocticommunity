@@ -37,7 +37,7 @@ RansomHouse primarily conducts data exfiltration attacks rather than using tradi
 ### Indicators of Compromise (IOCs)
 **Hashes:**
 - SHA256: 2C1475F1B49A8B93A6C6217BE078392925535E084048BF04241E57A711F0F58E
-- SHA256: 549A8BC04C0EA9C622BAC90B0607E3F4FD48CB5610601031E054CC6340F8EBA5
+- SHA256: 549A8BC04C0EA9C622BAC90B0607E3F4FD48CB5610601031E054CC622BAC90B0607E3F4FD48CB5610601031E054CC6340F8EBA5
 
 **URLs:**
 - \`XW7AU5PNWTL6LOZBSUDKMYD32N6GNQDNGITJDPPYBUDAN3X3PJGPMPID[.]ONION\`
@@ -50,7 +50,7 @@ RansomHouse primarily conducts data exfiltration attacks rather than using tradi
 - HowToRestore.txt
 
 ### Tactics, Techniques, and Procedures (TTPs)
-- Exploits vulnerabilities, uses Mimikatz for credential dumping, and PowerShell for system discovery.`
+- Exploits vulnerabilities, uses Mimikatz for credential dumping, and PowerShell for system discovery.`,
     },
     LockBit: {
       title: "LockBit",
@@ -74,7 +74,7 @@ Known for using the **Ransomware-as-a-Service (RaaS)** model, LockBit attacks ha
 - Global<MD4 hash of machine GUID>
 
 ### Tactics, Techniques, and Procedures (TTPs)
-- Known for targeting critical infrastructure, leveraging advanced evasion techniques, and using tools like PowerShell.`
+- Known for targeting critical infrastructure, leveraging advanced evasion techniques, and using tools like PowerShell.`,
     },
   };
 
@@ -103,6 +103,37 @@ Known for using the **Ransomware-as-a-Service (RaaS)** model, LockBit attacks ha
           Ongoing investigation into threat actors, ransomware groups, and targeted campaigns affecting Illinois, the Midwest, and critical U.S. sectors.
         </p>
       </motion.div>
+
+      <section>
+        <div className="mb-6">
+          <h2 className="text-2xl font-mono font-semibold">🕵️ Threat Actor Spotlights</h2>
+          <p className="text-muted-foreground">
+            A closer look at APT groups and ransomware gangs known to target critical sectors.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.keys(modalContent).map((actor) => (
+            <div
+              key={actor}
+              className="border border-border p-4 rounded-md bg-muted/20 cursor-pointer"
+              onClick={() => {
+                setActorDetails(modalContent[actor]);
+                setIsModalOpen(true);
+              }}
+            >
+              <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-red-500" />
+                {modalContent[actor].title}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                {modalContent[actor].content.split("\n")[0]}
+              </p>
+              <Badge variant="secondary">{actor === "RansomHouse" ? "Healthcare" : "Manufacturing"}</Badge>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section>
         <div className="mb-6 flex items-center justify-between">
@@ -151,37 +182,6 @@ Known for using the **Ransomware-as-a-Service (RaaS)** model, LockBit attacks ha
                   </Badge>
                 )}
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-6">
-          <h2 className="text-2xl font-mono font-semibold">🕵️ Threat Actor Spotlights</h2>
-          <p className="text-muted-foreground">
-            A closer look at APT groups and ransomware gangs known to target critical sectors.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.keys(modalContent).map((actor) => (
-            <div
-              key={actor}
-              className="border border-border p-4 rounded-md bg-muted/20 cursor-pointer"
-              onClick={() => {
-                setActorDetails(modalContent[actor]);
-                setIsModalOpen(true);
-              }}
-            >
-              <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-red-500" />
-                {modalContent[actor].title}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                {modalContent[actor].content.split("\n")[0]}
-              </p>
-              <Badge variant="secondary">{actor === "RansomHouse" ? "Healthcare" : "Manufacturing"}</Badge>
             </div>
           ))}
         </div>

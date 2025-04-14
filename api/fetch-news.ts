@@ -1,6 +1,11 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import Parser from 'rss-parser';
+
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
 };
+
+const parser = new Parser();
 
 const sources = [
   'https://feeds.feedburner.com/TheHackersNews',
@@ -11,63 +16,41 @@ const sources = [
 
 const keywords = [
   'cybersecurity', 'breach', 'ransomware', 'data leak', 'zero-day',
-  'APT', 'CISA', 'Illinois', 'Midwest', 'Chicago', 'USA', 'gov'
+  'APT', 'CISA', 'Illinois', 'Midwest', 'Chicago', 'USA', 'gov',
 ];
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const feedResults = await Promise.allSettled(
-      sources.map(url => fetch(url).then(res => res.text()))
+    const results = await Promise.allSettled(
+      sources.map((url) => parser.parseURL(url))
     );
 
-    const items: any[] = [];
+    const items = results
+      .filter((r): r is PromiseFulfilledResult<Parser.Output<any>> => r.status === 'fulfilled')
+      .flatMap((r) => r.value.items || []);
 
-    for (const result of feedResults) {
-      if (result.status === 'fulfilled') {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(result.value, 'text/xml');
-        const entries = xmlDoc.querySelectorAll('item');
-
-        entries.forEach((entry) => {
-          items.push({
-            title: entry.querySelector('title')?.textContent || '',
-            link: entry.querySelector('link')?.textContent || '',
-            description: entry.querySelector('description')?.textContent || '',
-            pubDate: entry.querySelector('pubDate')?.textContent || '',
-            category: entry.querySelector('category')?.textContent || 'General',
-          });
-        });
-      }
-    }
-
-    // Filter
     const filtered = items.filter((item) => {
-      const content = `${item.title} ${item.description}`.toLowerCase();
+      const content = `${item.title} ${item.contentSnippet}`.toLowerCase();
       return keywords.some((kw) => content.includes(kw.toLowerCase()));
     });
 
-    // Deduplicate + Slice
-    const unique = Array.from(new Map(filtered.map((i) => [i.link, i])).values());
-    const topItems = unique.slice(0, 20);
+    const deduped = Array.from(
+      new Map(filtered.map((item) => [item.link, item])).values()
+    );
 
-    return new Response(JSON.stringify(topItems), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    const simplified = deduped.slice(0, 20).map((item) => ({
+      title: item.title || 'Untitled',
+      description: item.contentSnippet || '',
+      date: item.pubDate || '',
+      link: item.link || '',
+      category: item.categories?.[0] || 'General',
+    }));
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=3600');
+    res.status(200).json(simplified);
   } catch (err: any) {
     console.error('News API error:', err);
-    return new Response(
-      JSON.stringify({ error: err.message || 'Internal Error' }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }

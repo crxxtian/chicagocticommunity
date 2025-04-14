@@ -1,10 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ],
-  "functions": {
-    "api/fetch-news.ts": {
-      "runtime": "nodejs18.x"
-    }
+    "rewrites": [
+      { "source": "/(.*)", "destination": "/" }
+    ]
   }
-}
+  

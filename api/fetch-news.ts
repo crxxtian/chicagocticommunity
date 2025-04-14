@@ -1,51 +1,38 @@
-export default async function handler(req: Request): Promise<Response> {
-  const apiKey = process.env.NEWSAPI_KEY;
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import NewsAPI from 'newsapi';
 
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "Missing NEWSAPI_KEY environment variable" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+const newsapi = new NewsAPI(process.env.NEWSAPI_KEY || '');
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (!process.env.NEWSAPI_KEY) {
+    return res.status(500).json({ error: 'Missing NEWSAPI_KEY in environment' });
   }
 
-  const query = "cybersecurity OR ransomware OR data breach OR hacking";
-  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=20`;
-
   try {
-    const apiRes = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-      },
+    const response = await newsapi.v2.topHeadlines({
+      q: 'cybersecurity OR ransomware OR data breach OR hacking',
+      language: 'en',
+      pageSize: 20,
     });
 
-    const data = await apiRes.json();
+    if (response.status !== 'ok') {
+      return res.status(502).json({ error: 'NewsAPI returned an error', details: response });
+    }
 
-    const simplified = (data.articles || []).map((item: any) => ({
+    const simplified = response.articles.map((item) => ({
       title: item.title,
       description: item.description,
       date: item.publishedAt,
       link: item.url,
-      category: item.source.name,
+      image: item.urlToImage || null,
+      source: item.source.name,
     }));
 
-    return new Response(JSON.stringify(simplified), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "s-maxage=3600",
-      },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=1800');
+    return res.status(200).json(simplified);
   } catch (err: any) {
-    console.error("News API error:", err);
-    return new Response(JSON.stringify({ error: "Failed to fetch news" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    console.error('News API error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to fetch news' });
   }
 }

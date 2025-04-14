@@ -23,7 +23,10 @@ type NewsItem = {
   date: string;
   link: string;
   category: string;
+  image?: string | null;
+  source?: string;
 };
+
 
 const News = () => {
   const [allNews, setAllNews] = useState<NewsItem[]>([]);
@@ -169,14 +172,17 @@ const News = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNews.map((news, index) => (
             <ContentCard
-              key={index}
-              title={news.title}
-              description={news.description}
-              date={news.date}
-              link={news.link}
-              badge={news.category}
-              className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
-            />
+            key={index}
+            title={news.title}
+            description={news.description}
+            date={news.date}
+            link={news.link}
+            badge={news.category}
+            image={news.image}
+            source={news.source}
+            external // ensures external links use <a> not <Link>
+            className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
+          />          
           ))}
         </div>
       )}

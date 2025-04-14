@@ -1,7 +1,4 @@
-export const config = {
-  runtime: 'edge',
-};
-
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Parser from 'rss-parser';
 
 const parser = new Parser();
@@ -18,7 +15,7 @@ const keywords = [
   'APT', 'CISA', 'Illinois', 'Midwest', 'Chicago', 'USA', 'gov',
 ];
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const results = await Promise.allSettled(
       sources.map((url) => parser.parseURL(url))
@@ -45,22 +42,11 @@ export default async function handler(req: Request): Promise<Response> {
       category: item.categories?.[0] || 'General',
     }));
 
-    return new Response(JSON.stringify(simplified), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 's-maxage=3600',
-      },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=3600');
+    res.status(200).json(simplified);
   } catch (err: any) {
     console.error('News API error:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Internal Server Error' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }

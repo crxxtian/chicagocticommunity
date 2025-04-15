@@ -65,7 +65,7 @@ export function ContentCard({
     General: "bg-muted text-muted-foreground",
   };
 
-  // Layout styles based on card type
+  // Smart visual tweaks based on variant
   const clampTitle = variant === "news" ? "line-clamp-4" : "line-clamp-2";
   const clampDescription = variant === "news" ? "line-clamp-3" : "line-clamp-2";
   const minHeight =
@@ -75,8 +75,13 @@ export function ContentCard({
       ? "min-h-[280px]"
       : "min-h-[240px]";
 
-  // Combine badge + tags and remove duplicates
-  const allTags = Array.from(new Set([badge, ...tags].filter(Boolean)));
+  const allTags = Array.from(
+    new Map(
+      [badge, ...tags]
+        .filter(Boolean)
+        .map((tag) => [tag.toLowerCase(), tag])
+    ).values()
+  );
 
   const CardContent = () => (
     <motion.div
@@ -90,7 +95,6 @@ export function ContentCard({
         className
       )}
     >
-      {/* Optional image */}
       {image && (
         <img
           src={image}
@@ -100,7 +104,7 @@ export function ContentCard({
       )}
 
       <div className="space-y-2 flex-1">
-        {/* Title and date */}
+        {/* Title & date row */}
         <div className="flex justify-between items-start gap-4">
           <h3
             className={cn(
@@ -119,15 +123,9 @@ export function ContentCard({
         </div>
 
         {/* Description */}
-        {description ? (
-          <p className={cn("text-sm text-muted-foreground", clampDescription)}>
-            {description}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground italic">
-            No summary available.
-          </p>
-        )}
+        <p className={cn("text-sm text-muted-foreground", clampDescription)}>
+          {description || <i>No summary available.</i>}
+        </p>
 
         {/* Tags */}
         {allTags.length > 0 && (
@@ -146,7 +144,6 @@ export function ContentCard({
           </div>
         )}
 
-        {/* Optional source */}
         {source && (
           <p className="text-xs text-muted-foreground italic pt-1">
             Source: {source}
@@ -154,7 +151,7 @@ export function ContentCard({
         )}
       </div>
 
-      {/* Read more */}
+      {/* Footer */}
       {link && (
         <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline mt-auto">
           {external ? (
@@ -175,7 +172,6 @@ export function ContentCard({
     </motion.div>
   );
 
-  // If external: render just a div, otherwise wrap in <Link />
   return link && !external ? (
     <Link to={link} className="block h-full">
       {CardContent()}

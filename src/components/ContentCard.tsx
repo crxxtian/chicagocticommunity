@@ -14,6 +14,7 @@ interface ContentCardProps {
   external?: boolean;
   image?: string | null;
   className?: string;
+  variant?: "news" | "report" | "spotlight"; // 🆕 controls sizing
 }
 
 export function ContentCard({
@@ -27,6 +28,7 @@ export function ContentCard({
   external = false,
   image,
   className,
+  variant = "news", // 🆕 default variant
 }: ContentCardProps) {
   const formattedDate = date
     ? new Date(date).toLocaleString(undefined, {
@@ -37,6 +39,18 @@ export function ContentCard({
         minute: "2-digit",
       })
     : null;
+
+  // 🎨 Smart visual tweaks per variant
+  const clampTitle =
+    variant === "news" ? "line-clamp-4" : "line-clamp-2";
+  const clampDescription =
+    variant === "news" ? "line-clamp-3" : "line-clamp-2";
+  const minHeight =
+    variant === "news"
+      ? "min-h-[360px]"
+      : variant === "report"
+      ? "min-h-[280px]"
+      : "min-h-[240px]";
 
   const badgeColorMap: Record<string, string> = {
     Ransomware: "bg-red-600 text-white",
@@ -71,7 +85,7 @@ export function ContentCard({
       transition={{ duration: 0.25, ease: "easeOut" }}
       viewport={{ once: true }}
       className={cn(
-        "h-full min-h-[300px] flex flex-col justify-between border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors",
+        `h-full ${minHeight} flex flex-col justify-between border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors`,
         className
       )}
     >
@@ -84,16 +98,17 @@ export function ContentCard({
       )}
 
       <div className="space-y-2 flex-1">
-        {/* Title and Date */}
+        {/* Title & date row */}
         <div className="flex justify-between items-start gap-4">
-        <h3
-          className="font-sans font-semibold text-base md:text-[1.05rem] leading-snug line-clamp-4 break-words"
-          title={title}
-        >
-  {title.length > 250 ? title.slice(0, 245).trim() + "…" : title}
-</h3>
-
-
+          <h3
+            className={cn(
+              "font-sans font-semibold text-base md:text-[1.05rem] leading-snug break-words",
+              clampTitle
+            )}
+            title={title}
+          >
+            {title.length > 250 ? title.slice(0, 245).trim() + "…" : title}
+          </h3>
           {formattedDate && (
             <span className="text-xs text-muted-foreground text-right shrink-0 whitespace-nowrap">
               {formattedDate}
@@ -103,7 +118,7 @@ export function ContentCard({
 
         {/* Description */}
         {description ? (
-          <p className="text-sm text-muted-foreground line-clamp-3 break-words">
+          <p className={cn("text-sm text-muted-foreground", clampDescription)}>
             {description}
           </p>
         ) : (
@@ -112,7 +127,7 @@ export function ContentCard({
           </p>
         )}
 
-        {/* Tags and Badge */}
+        {/* Tags & badge */}
         <div className="flex flex-wrap gap-2 pt-1">
           {badge && (
             <span
@@ -124,7 +139,6 @@ export function ContentCard({
               {badge}
             </span>
           )}
-
           {tags
             .filter((tag) => tag !== badge)
             .map((tag) => (

@@ -64,9 +64,7 @@ const Index = () => {
 
         const sorted = items
           .filter((item) => item.date && !isNaN(new Date(item.date).getTime()))
-          .sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setLatestNews(sorted.slice(0, 3));
       })
@@ -121,6 +119,7 @@ const Index = () => {
                 tags={news.tags}
                 source={news.source}
                 external
+                variant="news" // ✅ tall layout for news
                 className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
               />
             ))}
@@ -139,6 +138,7 @@ const Index = () => {
               date={report.date}
               tags={report.tags}
               link={report.link}
+              variant="report" // ✅ tighter for report
             />
           ))}
         </div>
@@ -153,6 +153,7 @@ const Index = () => {
               title={profile.title}
               description={profile.description}
               link={profile.link}
+              variant="spotlight" // ✅ compact layout
             />
           ))}
         </div>

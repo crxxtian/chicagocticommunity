@@ -12,16 +12,22 @@ type Item = {
   image?: string;
 };
 
+const normalize = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/\n/g, " ") // remove line breaks
+    .replace(/\s+/g, " ") // collapse whitespace
+    .trim();
+
 const Search = () => {
   const [searchParams] = useSearchParams();
   const [results, setResults] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const query =
-    searchParams.get("search")?.toLowerCase() ||
-    searchParams.get("query")?.toLowerCase() ||
-    "";
+  const rawQuery =
+    searchParams.get("search") || searchParams.get("query") || "";
+  const query = normalize(rawQuery);
 
   useEffect(() => {
     if (!query) {
@@ -36,11 +42,10 @@ const Search = () => {
       try {
         const [newsRes, reportsRes] = await Promise.all([
           fetch("/api/fetch-news").then((res) => res.ok ? res.json() : []),
-          fetch("/data/mini-reports.json")
-            .then((res) => (res.ok ? res.json() : []))
-            .catch(() => []), // fallback if file missing
+          fetch("/data/mini-reports.json").then((res) =>
+            res.ok ? res.json() : []
+          ).catch(() => []),
         ]);
-
         return [...newsRes, ...reportsRes];
       } catch (err) {
         console.error("Search fetch error:", err);
@@ -51,9 +56,13 @@ const Search = () => {
 
     fetchSources().then((data) => {
       const filtered = data.filter((item) => {
-        const text = `${item.title} ${item.description} ${item.category ?? ""} ${item.source ?? ""}`.toLowerCase();
-        return text.includes(query);
+        const content = normalize(
+          `${item.title} ${item.description} ${item.category ?? ""} ${item.source ?? ""}`
+        );
+        return content.includes(query);
       });
+
+      console.log("Search results for:", query, "->", filtered);
       setResults(filtered);
       setLoading(false);
     });
@@ -70,7 +79,7 @@ const Search = () => {
         </p>
       )}
       {!loading && !error && results.length === 0 && (
-        <p className="text-muted-foreground">No results found for “{query}”.</p>
+        <p className="text-muted-foreground">No results found for “{rawQuery}”.</p>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -67,11 +67,11 @@ export function ContentCard({
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.015 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
       viewport={{ once: true }}
       className={cn(
-        "border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors h-full flex flex-col justify-between",
+        "h-full min-h-[260px] flex flex-col justify-between border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors",
         className
       )}
     >
@@ -84,24 +84,29 @@ export function ContentCard({
       )}
 
       <div className="space-y-2 flex-1">
+        {/* Title and Date */}
         <div className="flex justify-between items-start">
-          <h3 className="font-mono font-medium text-lg line-clamp-3">
+          <h3 className="font-mono font-medium text-base md:text-lg line-clamp-2">
             {title}
           </h3>
           {formattedDate && (
-            <span className="text-xs text-muted-foreground text-right">
+            <span className="text-xs text-muted-foreground text-right whitespace-nowrap">
               {formattedDate}
             </span>
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-4">
-          {description}
-        </p>
+        {/* Description (conditionally shown) */}
+        {description ? (
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {description}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">No summary available.</p>
+        )}
 
         {/* Tags and Badge */}
         <div className="flex flex-wrap gap-2 pt-1">
-          {/* Main badge */}
           {badge && (
             <span
               className={cn(
@@ -112,8 +117,6 @@ export function ContentCard({
               {badge}
             </span>
           )}
-
-          {/* Supporting tags — excluding the badge to prevent duplicates */}
           {tags
             .filter((tag) => tag !== badge)
             .map((tag) => (
@@ -129,6 +132,7 @@ export function ContentCard({
             ))}
         </div>
 
+        {/* Source */}
         {source && (
           <p className="text-xs text-muted-foreground italic pt-1">
             Source: {source}
@@ -136,9 +140,9 @@ export function ContentCard({
         )}
       </div>
 
-      {/* Link footer */}
+      {/* Read More */}
       {link && (
-        <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline">
+        <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline mt-auto">
           {external ? (
             <>
               <a href={link} target="_blank" rel="noopener noreferrer">
@@ -157,13 +161,11 @@ export function ContentCard({
     </motion.div>
   );
 
-  if (link && !external) {
-    return (
-      <Link to={link} className="block h-full">
-        <CardContent />
-      </Link>
-    );
-  }
-
-  return <CardContent />;
+  return link && !external ? (
+    <Link to={link} className="block h-full">
+      {CardContent()}
+    </Link>
+  ) : (
+    CardContent()
+  );
 }

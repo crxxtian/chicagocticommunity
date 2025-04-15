@@ -86,9 +86,10 @@ export function ContentCard({
       <div className="space-y-2 flex-1">
         {/* Title and Date */}
         <div className="flex justify-between items-start gap-2">
-          <h3 className="font-mono font-semibold text-base md:text-lg leading-snug line-clamp-3">
+          <h3 className="font-mono font-semibold text-base md:text-lg leading-snug">
             {title}
-          </h3>
+        </h3>
+
           {formattedDate && (
             <span className="text-xs text-muted-foreground text-right whitespace-nowrap">
               {formattedDate}

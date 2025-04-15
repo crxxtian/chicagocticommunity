@@ -14,10 +14,7 @@ type Item = {
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const query =
-    searchParams.get("search")?.toLowerCase() ||
-    searchParams.get("query")?.toLowerCase() ||
-    "";
+  const query = searchParams.get("query")?.toLowerCase() || "";
   const [results, setResults] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -30,15 +27,24 @@ const Search = () => {
     setLoading(true);
 
     Promise.all([
-      fetch("/api/fetch-news").then((res) => res.json()),
-      fetch("/data/mini-reports.json").then((res) => res.json()).catch(() => []),
+      fetch("/api/fetch-news")
+        .then((res) => res.json())
+        .then((data) => Array.isArray(data) ? data : []),
+      fetch("/data/mini-reports.json")
+        .then((res) => res.json())
+        .then((data) => Array.isArray(data) ? data : [])
+        .catch(() => []),
     ])
       .then(([news, reports]) => {
         const allItems = [...news, ...reports];
+        console.log("🔍 Total items:", allItems.length);
+
         const matches = allItems.filter((item: Item) => {
-          const searchableText = `${item.title} ${item.description} ${item.category || ""} ${item.source || ""}`.toLowerCase();
-          return searchableText.includes(query);
+          const text = `${item.title || ""} ${item.description || ""} ${item.category || ""} ${item.source || ""}`.toLowerCase();
+          return text.includes(query);
         });
+
+        console.log("✅ Matches:", matches.length);
         setResults(matches);
       })
       .catch((err) => {

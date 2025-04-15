@@ -54,11 +54,17 @@ const Index = () => {
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
-    fetch(`/api/fetch-news?fresh=${Date.now()}`)
+    fetch("/api/fetch-news", {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+    })
       .then((res) => res.json())
       .then((data: NewsItem[]) => setLatestNews(data.slice(0, 3)))
       .catch((err) => console.error("Failed to load latest news", err));
   }, []);
+  
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

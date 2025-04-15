@@ -58,13 +58,15 @@ const Index = () => {
   useEffect(() => {
     fetch("/api/fetch-news")
       .then((res) => res.json())
-      .then((data: NewsItem[]) => {
-        const sorted = data
+      .then((data) => {
+        const items: NewsItem[] = data.results || [];
+
+        const sorted = items
           .filter((item) => item.date && !isNaN(new Date(item.date).getTime()))
           .sort(
-            (a, b) =>
-              new Date(b.date).getTime() - new Date(a.date).getTime()
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
           );
+
         setLatestNews(sorted.slice(0, 3));
       })
       .catch((err) => {

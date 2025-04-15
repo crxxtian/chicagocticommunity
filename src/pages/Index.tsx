@@ -10,6 +10,8 @@ type NewsItem = {
   date: string;
   link: string;
   category: string;
+  image?: string | null;
+  source?: string;
 };
 
 const miniReports = [
@@ -54,21 +56,18 @@ const Index = () => {
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
-    fetch("/api/fetch-news", {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-    })
+    // 👇 Adds a timestamp to bust Vercel/browser cache
+    fetch(`/api/fetch-news?cb=${Date.now()}`)
       .then((res) => res.json())
-      .then((data: NewsItem[]) => setLatestNews(data.slice(0, 3)))
+      .then((data: NewsItem[]) => {
+        setLatestNews(data.slice(0, 3)); // just show top 3
+      })
       .catch((err) => console.error("Failed to load latest news", err));
   }, []);
-  
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Title & intro */}
+      {/* Title & Intro */}
       <div className="mb-12 max-w-3xl">
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
@@ -85,14 +84,14 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Welcome banner */}
+      {/* Welcome Banner */}
       <div className="mb-10 p-6 border border-border rounded-md bg-secondary/30">
         <p className="font-medium text-muted-foreground">
           <strong>Welcome.</strong> Our mission is to improve Chicagoland’s cyber resilience through real-time threat sharing, expert analysis, and a local-first approach to community defense.
         </p>
       </div>
 
-      {/* News */}
+      {/* Latest News */}
       <HomeSection title="Latest News" linkTo="/news">
         {latestNews.length === 0 ? (
           <p className="text-muted-foreground">Loading news...</p>
@@ -106,6 +105,10 @@ const Index = () => {
                 date={news.date}
                 link={news.link}
                 badge={news.category}
+                image={news.image}
+                source={news.source}
+                external
+                className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
               />
             ))}
           </div>
@@ -142,7 +145,7 @@ const Index = () => {
         </div>
       </HomeSection>
 
-      {/* Footer animation */}
+      {/* Footer */}
       <CyberFooterPulse />
     </div>
   );

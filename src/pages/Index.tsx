@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
@@ -19,24 +19,24 @@ type NewsItem = {
   source?: string;
 };
 
-const miniReports = [
+const miniReports: NewsItem[] = [
   {
-    id: 1,
     title: "Chicago Public Schools Data Breach Exposes Student Information",
     description:
       "In March 2025, CPS reported a breach involving a vendor's server that exposed data of over 700,000 current and former students.",
     date: "2025-03-07",
-    tags: ["education", "data breach", "student information"],
     link: "/mini-reports/1",
+    badge: "Education",
+    tags: ["education", "data breach", "student information"],
   },
   {
-    id: 2,
     title: "SRAM Investigates Cybersecurity Incident Affecting IT Systems",
     description:
       "Chicago-based SRAM faced an IT outage in March 2025 due to a cybersecurity incident. Systems were restored and monitored closely.",
     date: "2025-03-27",
-    tags: ["manufacturing", "cybersecurity", "IT outage"],
     link: "/mini-reports/2",
+    badge: "Manufacturing",
+    tags: ["manufacturing", "cybersecurity", "IT outage"],
   },
 ];
 
@@ -62,31 +62,37 @@ const Index = () => {
   const [searchInput, setSearchInput] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch("/api/fetch-news")
-      .then((res) => res.json())
-      .then((data) => {
-        const items: NewsItem[] = data.results || data || [];
-        const sorted = items
-          .filter((item) => item.date && !isNaN(new Date(item.date).getTime()))
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setLatestNews(sorted.slice(0, 3));
-      })
-      .catch((err) => {
-        console.error("Failed to load latest news on homepage", err);
-      });
+  const fetchLatestNews = useCallback(async () => {
+    try {
+      const res = await fetch("/api/fetch-news");
+      const data = await res.json();
+      const items: NewsItem[] = data.results || [];
+
+      const sorted = items
+        .filter((item) => item.date && !isNaN(new Date(item.date).getTime()))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setLatestNews(sorted.slice(0, 3));
+    } catch (err) {
+      console.error("Failed to load latest news on homepage", err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchLatestNews();
+  }, [fetchLatestNews]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) {
-      navigate(`/search?query=${encodeURIComponent(searchInput.trim())}`);
+    const trimmed = searchInput.trim();
+    if (trimmed) {
+      navigate(`/search?query=${encodeURIComponent(trimmed)}`);
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Title & intro */}
+      {/* Title & Intro */}
       <div className="mb-12 max-w-3xl">
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
@@ -103,13 +109,11 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Welcome banner */}
+      {/* Welcome + Search */}
       <div className="mb-6 p-6 border border-border rounded-md bg-secondary/30">
         <p className="font-medium text-muted-foreground mb-4">
           <strong>Welcome.</strong> Our mission is to improve Chicagoland’s cyber resilience through real-time threat sharing, expert analysis, and a local-first approach to community defense.
         </p>
-
-        {/* Inline Search */}
         <form onSubmit={handleSearch} className="flex w-full max-w-md items-center gap-2">
           <Input
             type="text"
@@ -125,7 +129,7 @@ const Index = () => {
         </form>
       </div>
 
-      {/* News */}
+      {/* Latest News */}
       <HomeSection title="Latest News" linkTo="/news">
         {latestNews.length === 0 ? (
           <p className="text-muted-foreground">Loading news...</p>
@@ -153,21 +157,22 @@ const Index = () => {
       {/* Mini Reports */}
       <HomeSection title="Recent Mini-Reports" linkTo="/mini-reports">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {miniReports.map((report) => (
+          {miniReports.map((report, i) => (
             <ContentCard
-              key={report.id}
+              key={i}
               title={report.title}
               description={report.description}
               date={report.date}
               tags={report.tags}
               link={report.link}
+              badge={report.badge}
               variant="report"
             />
           ))}
         </div>
       </HomeSection>
 
-      {/* Research Spotlights */}
+      {/* Research */}
       <HomeSection title="Threat Actor Spotlights" linkTo="/research">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {threatProfiles.map((profile) => (
@@ -182,7 +187,6 @@ const Index = () => {
         </div>
       </HomeSection>
 
-      {/* Footer animation */}
       <CyberFooterPulse />
     </div>
   );

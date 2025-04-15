@@ -42,31 +42,28 @@ const Search = () => {
       try {
         const res = await fetch("/api/fetch-news");
         if (!res.ok) throw new Error("Failed to fetch /api/fetch-news");
-        const data: Item[] = await res.json();
+        const json = await res.json();
 
-        console.log("📦 RAW DATA from /api/fetch-news →", data);
+        // ✅ Extract the actual items
+        const items: Item[] = json.results || [];
 
-        const filtered = data.filter((item) => {
+        console.log("📦 RAW DATA:", json);
+        console.log("🔍 Searching for:", query);
+
+        const filtered = items.filter((item) => {
           const content = normalize(
             `${item.title} ${item.description} ${item.category ?? ""} ${item.source ?? ""}`
           );
           const match = content.includes(query);
-
           if (match) {
-            console.log("✅ MATCH FOUND:", {
-              title: item.title,
-              query,
-              content,
-            });
+            console.log("✅ MATCH:", item.title);
           }
-
           return match;
         });
 
-        console.log("🎯 Final filtered results →", filtered);
         return filtered;
       } catch (err) {
-        console.error("❌ Search fetch error:", err);
+        console.error("❌ Search error:", err);
         setError(true);
         return [];
       }

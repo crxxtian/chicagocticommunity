@@ -21,7 +21,10 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!query) return;
+    if (!query) {
+      setResults([]); // Clear results if query is empty
+      return;
+    }
     setLoading(true);
 
     Promise.all([
@@ -31,9 +34,10 @@ const Search = () => {
     ])
       .then(([news, reports, discussions]) => {
         const allItems = [...news, ...reports, ...discussions];
-        const matches = allItems.filter((item: Item) =>
-          `${item.title} ${item.description}`.toLowerCase().includes(query)
-        );
+        const matches = allItems.filter((item: Item) => {
+          const searchableText = `${item.title} ${item.description} ${item.category} ${item.source}`.toLowerCase();
+          return searchableText.includes(query);
+        });
         setResults(matches);
         setLoading(false);
       })

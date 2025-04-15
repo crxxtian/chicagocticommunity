@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
-import { Input } from "@/components/ui/input";
-import { Search as SearchIcon } from "lucide-react";
 
 type Item = {
   title: string;
@@ -35,7 +33,7 @@ const Search = () => {
       .then(([news, reports, discussions]) => {
         const allItems = [...news, ...reports, ...discussions];
         const matches = allItems.filter((item: Item) => {
-          const searchableText = `${item.title} ${item.description} ${item.category} ${item.source}`.toLowerCase();
+          const searchableText = `${item.title} ${item.description} ${item.category || ''} ${item.source || ''}`.toLowerCase();
           return searchableText.includes(query);
         });
         setResults(matches);

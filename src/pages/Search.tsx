@@ -14,9 +14,14 @@ type Item = {
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("query")?.toLowerCase() || "";
   const [results, setResults] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const query =
+    searchParams.get("search")?.toLowerCase() ||
+    searchParams.get("query")?.toLowerCase() ||
+    "";
 
   useEffect(() => {
     if (!query) {
@@ -25,42 +30,49 @@ const Search = () => {
     }
 
     setLoading(true);
+    setError(false);
 
-    Promise.all([
-      fetch("/api/fetch-news")
-        .then((res) => res.json())
-        .then((data) => Array.isArray(data) ? data : []),
-      fetch("/data/mini-reports.json")
-        .then((res) => res.json())
-        .then((data) => Array.isArray(data) ? data : [])
-        .catch(() => []),
-    ])
-      .then(([news, reports]) => {
-        const allItems = [...news, ...reports];
-        console.log("🔍 Total items:", allItems.length);
+    const fetchSources = async (): Promise<Item[]> => {
+      try {
+        const [newsRes, reportsRes] = await Promise.all([
+          fetch("/api/fetch-news").then((res) => res.ok ? res.json() : []),
+          fetch("/data/mini-reports.json")
+            .then((res) => (res.ok ? res.json() : []))
+            .catch(() => []), // fallback if file missing
+        ]);
 
-        const matches = allItems.filter((item: Item) => {
-          const text = `${item.title || ""} ${item.description || ""} ${item.category || ""} ${item.source || ""}`.toLowerCase();
-          return text.includes(query);
-        });
+        return [...newsRes, ...reportsRes];
+      } catch (err) {
+        console.error("Search fetch error:", err);
+        setError(true);
+        return [];
+      }
+    };
 
-        console.log("✅ Matches:", matches.length);
-        setResults(matches);
-      })
-      .catch((err) => {
-        console.error("Search error:", err);
-        setResults([]);
-      })
-      .finally(() => setLoading(false));
+    fetchSources().then((data) => {
+      const filtered = data.filter((item) => {
+        const text = `${item.title} ${item.description} ${item.category ?? ""} ${item.source ?? ""}`.toLowerCase();
+        return text.includes(query);
+      });
+      setResults(filtered);
+      setLoading(false);
+    });
   }, [query]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <h1 className="text-2xl font-bold mb-6 font-mono">Search Results</h1>
+
       {loading && <p className="text-muted-foreground">Searching...</p>}
-      {!loading && results.length === 0 && (
+      {error && (
+        <p className="text-red-500">
+          Something went wrong while loading search results.
+        </p>
+      )}
+      {!loading && !error && results.length === 0 && (
         <p className="text-muted-foreground">No results found for “{query}”.</p>
       )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {results.map((item, i) => (
           <ContentCard
@@ -72,7 +84,7 @@ const Search = () => {
             badge={item.category}
             image={item.image}
             source={item.source}
-            external={item.link.startsWith("http")}
+            external={item.link?.startsWith("http")}
           />
         ))}
       </div>

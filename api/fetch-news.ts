@@ -4,10 +4,6 @@ import Parser from 'rss-parser';
 const newsapi = new NewsAPI(process.env.NEWSAPI_KEY || '');
 const parser = new Parser();
 
-export const config = {
-  runtime: 'edge',
-};
-
 const keywords = [
   "cybersecurity", "ransomware", "malware", "zero-day", "exploit",
   "breach", "leak", "phishing", "ddos", "cve", "vulnerability", "patch",
@@ -47,7 +43,7 @@ function filterRelevantItems(items: any[], source: string) {
     });
 }
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: any, res: any) {
   try {
     const newsapiRes = await newsapi.v2.everything({
       q: '("cybersecurity" OR "ransomware" OR "breach" OR "CISA") AND (Chicago OR Illinois)',
@@ -58,7 +54,10 @@ export default async function handler(req: Request): Promise<Response> {
       excludeDomains: 'newsbreak.com,carbuzz.com,dailymail.co.uk',
     });
 
-    const newsapiItems = (newsapiRes.articles || []).map((item) => {
+    const newsapiItems = (newsapiRes.articles || []).filter((a) => {
+      const t = `${a.title} ${a.description}`.toLowerCase();
+      return keywords.some((kw) => t.includes(kw));
+    }).map((item) => {
       let category = "General";
       const lower = `${item.title} ${item.description}`.toLowerCase();
       if (lower.includes("cisa")) category = "CISA";
@@ -75,10 +74,7 @@ export default async function handler(req: Request): Promise<Response> {
       };
     });
 
-    const rssResults = await Promise.allSettled(
-      rssFeeds.map((url) => parser.parseURL(url))
-    );
-
+    const rssResults = await Promise.allSettled(rssFeeds.map((url) => parser.parseURL(url)));
     const rssItems = rssResults
       .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
       .flatMap((r) => filterRelevantItems(r.value.items || [], r.value.link || ""));
@@ -86,22 +82,11 @@ export default async function handler(req: Request): Promise<Response> {
     const merged = [...newsapiItems, ...rssItems];
     const deduped = Array.from(new Map(merged.map(item => [item.link, item])).values());
 
-    return new Response(JSON.stringify(deduped.slice(0, 30)), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-store", 
-      },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); // 5 min freshness
+    return res.status(200).json(deduped.slice(0, 30));
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-store",
-      },
-    });
+    console.error("News Fetch Error:", err);
+    res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

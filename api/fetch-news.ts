@@ -26,7 +26,6 @@ const rssFeeds = [
   "https://cyberalerts.io/rss/latest-public"
 ];
 
-// Aliases and variations that normalize to one canonical tag
 const tagAliases: Record<string, string> = {
   // Nation-states
   china: "China", chinese: "China", prc: "China",
@@ -51,20 +50,26 @@ const tagAliases: Record<string, string> = {
   // Regional
   chicago: "Chicago", illinois: "Illinois",
   usa: "United States", "u.s.": "United States", america: "United States", us: "United States",
-  nato: "NATO",
+  nato: "NATO"
 };
 
 function extractTags(content: string): string[] {
-  const tags = Object.entries(tagAliases)
-    .filter(([variant]) => content.includes(variant))
-    .map(([, canonical]) => canonical);
-  return Array.from(new Set(tags));
+  const matched = new Set<string>();
+
+  for (const [variant, canonical] of Object.entries(tagAliases)) {
+    const regex = new RegExp(`\\b${variant}\\b`, "i");
+    if (regex.test(content)) {
+      matched.add(canonical);
+    }
+  }
+
+  return Array.from(matched);
 }
 
 function filterRelevantItems(items: any[], source: string, sourceTitle = "Unknown Source") {
   return items
     .map((item) => {
-      const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`.toLowerCase();
+      const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`;
       const tags = extractTags(content);
       const hasRelevantTags = tags.length > 0;
 
@@ -74,11 +79,11 @@ function filterRelevantItems(items: any[], source: string, sourceTitle = "Unknow
         date: item.isoDate || item.pubDate || "",
         link: item.link,
         tags,
-        badge: tags[0] || "General", // ✅ assign first tag as primary badge
+        badge: tags[0] || "General",
         source: sourceTitle,
       };
     })
-    .filter((item) => item.badge !== "General"); // optional: skip completely irrelevant items
+    .filter((item) => item.badge !== "General"); // Optional: only show items with tags
 }
 
 export default async function handler(req: any, res: any) {

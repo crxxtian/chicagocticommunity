@@ -14,36 +14,38 @@ type Item = {
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("query")?.toLowerCase() || "";
+  const query =
+    searchParams.get("search")?.toLowerCase() ||
+    searchParams.get("query")?.toLowerCase() ||
+    "";
   const [results, setResults] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!query) {
-      setResults([]); // Clear results if query is empty
+      setResults([]);
       return;
     }
+
     setLoading(true);
 
     Promise.all([
-      fetch("/api/fetch-news").then(res => res.json()), // News
-      fetch("/data/mini-reports.json").then(res => res.json()), // Static
-      fetch("/data/discussions.json").then(res => res.json()), // Optional
+      fetch("/api/fetch-news").then((res) => res.json()),
+      fetch("/data/mini-reports.json").then((res) => res.json()).catch(() => []),
     ])
-      .then(([news, reports, discussions]) => {
-        const allItems = [...news, ...reports, ...discussions];
+      .then(([news, reports]) => {
+        const allItems = [...news, ...reports];
         const matches = allItems.filter((item: Item) => {
-          const searchableText = `${item.title} ${item.description} ${item.category || ''} ${item.source || ''}`.toLowerCase();
+          const searchableText = `${item.title} ${item.description} ${item.category || ""} ${item.source || ""}`.toLowerCase();
           return searchableText.includes(query);
         });
         setResults(matches);
-        setLoading(false);
       })
       .catch((err) => {
         console.error("Search error:", err);
         setResults([]);
-        setLoading(false);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [query]);
 
   return (

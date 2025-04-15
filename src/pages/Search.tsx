@@ -15,8 +15,8 @@ type Item = {
 const normalize = (text: string) =>
   text
     .toLowerCase()
-    .replace(/\n/g, " ") // remove line breaks
-    .replace(/\s+/g, " ") // collapse whitespace
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 
 const Search = () => {
@@ -40,30 +40,40 @@ const Search = () => {
 
     const fetchSources = async (): Promise<Item[]> => {
       try {
-        const [newsRes, reportsRes] = await Promise.all([
-          fetch("/api/fetch-news").then((res) => res.ok ? res.json() : []),
-          fetch("/data/mini-reports.json").then((res) =>
-            res.ok ? res.json() : []
-          ).catch(() => []),
-        ]);
-        return [...newsRes, ...reportsRes];
+        const res = await fetch("/api/fetch-news");
+        if (!res.ok) throw new Error("Failed to fetch /api/fetch-news");
+        const data: Item[] = await res.json();
+
+        console.log("📦 RAW DATA from /api/fetch-news →", data);
+
+        const filtered = data.filter((item) => {
+          const content = normalize(
+            `${item.title} ${item.description} ${item.category ?? ""} ${item.source ?? ""}`
+          );
+          const match = content.includes(query);
+
+          if (match) {
+            console.log("✅ MATCH FOUND:", {
+              title: item.title,
+              query,
+              content,
+            });
+          }
+
+          return match;
+        });
+
+        console.log("🎯 Final filtered results →", filtered);
+        return filtered;
       } catch (err) {
-        console.error("Search fetch error:", err);
+        console.error("❌ Search fetch error:", err);
         setError(true);
         return [];
       }
     };
 
-    fetchSources().then((data) => {
-      const filtered = data.filter((item) => {
-        const content = normalize(
-          `${item.title} ${item.description} ${item.category ?? ""} ${item.source ?? ""}`
-        );
-        return content.includes(query);
-      });
-
-      console.log("Search results for:", query, "->", filtered);
-      setResults(filtered);
+    fetchSources().then((filteredResults) => {
+      setResults(filteredResults);
       setLoading(false);
     });
   }, [query]);
@@ -73,13 +83,17 @@ const Search = () => {
       <h1 className="text-2xl font-bold mb-6 font-mono">Search Results</h1>
 
       {loading && <p className="text-muted-foreground">Searching...</p>}
+
       {error && (
         <p className="text-red-500">
           Something went wrong while loading search results.
         </p>
       )}
+
       {!loading && !error && results.length === 0 && (
-        <p className="text-muted-foreground">No results found for “{rawQuery}”.</p>
+        <p className="text-muted-foreground">
+          No results found for “{rawQuery}”.
+        </p>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

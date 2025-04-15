@@ -26,74 +26,59 @@ const rssFeeds = [
   "https://cyberalerts.io/rss/latest-public"
 ];
 
-const tagMap: Record<string, string> = {
-  // Threat types
-  "ransomware": "Ransomware",
-  "malware": "Malware",
-  "phishing": "Phishing",
-  "zero-day": "Zero-Day",
-  "exploit": "Exploit",
-  "backdoor": "Backdoor",
-  "rootkit": "Rootkit",
-  "ddos": "DDoS",
-  "breach": "Data Breach",
-  "cve": "CVE",
-  "vulnerability": "Vulnerability",
-  "patch": "Patch",
-  "Critical": "CRITICAL",
-
+// Aliases and variations that normalize to one canonical tag
+const tagAliases: Record<string, string> = {
   // Nation-states
-  "china": "China",
-  "russia": "Russia",
-  "iran": "Iran",
-  "north korea": "North Korea",
-  "apt": "APT",
+  china: "China", chinese: "China", prc: "China",
+  russia: "Russia", russian: "Russia", moscow: "Russia",
+  iran: "Iran", iranian: "Iran", tehran: "Iran",
+  "north korea": "North Korea", "north korean": "North Korea", dprk: "North Korea",
+
+  // Threats
+  malware: "Malware", "malicious software": "Malware", virus: "Malware",
+  ransomware: "Ransomware", exploit: "Exploit",
+  "zero-day": "Zero-Day", zeroday: "Zero-Day",
+  vulnerability: "Vulnerability", cve: "CVE", patch: "Patch",
+  phishing: "Phishing", "spear phishing": "Phishing",
+  ddos: "DDoS", "denial of service": "DDoS",
+  breach: "Data Breach", "data leak": "Data Breach",
 
   // Sectors
-  "hospital": "Healthcare",
-  "clinic": "Healthcare",
-  "healthcare": "Healthcare",
-  "school": "Education",
-  "university": "Education",
-  "education": "Education",
-  "government": "Government",
-  "municipality": "Municipality",
-  "infrastructure": "Infrastructure",
+  hospital: "Healthcare", clinic: "Healthcare", healthcare: "Healthcare",
+  school: "Education", education: "Education", university: "Education",
+  government: "Government", municipality: "Municipality", infrastructure: "Infrastructure",
 
   // Regional
-  "chicago": "Chicago",
-  "illinois": "Illinois",
-  "us": "United States",
-  "america": "United States",
-  "nato": "NATO",
+  chicago: "Chicago", illinois: "Illinois",
+  usa: "United States", "u.s.": "United States", america: "United States", us: "United States",
+  nato: "NATO",
 };
+
+function extractTags(content: string): string[] {
+  const tags = Object.entries(tagAliases)
+    .filter(([variant]) => content.includes(variant))
+    .map(([, canonical]) => canonical);
+  return Array.from(new Set(tags));
+}
 
 function filterRelevantItems(items: any[], source: string, sourceTitle = "Unknown Source") {
   return items
-    .filter((item) => {
-      const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`.toLowerCase();
-      return Object.keys(tagMap).some((kw) => content.includes(kw));
-    })
     .map((item) => {
       const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`.toLowerCase();
-
-      const matchedTags = Array.from(
-        new Set(
-          Object.entries(tagMap)
-            .filter(([kw]) => content.includes(kw))
-            .map(([, tag]) => tag)
-        )
-      );
+      const tags = extractTags(content);
+      const hasRelevantTags = tags.length > 0;
 
       return {
         title: item.title,
         description: item.contentSnippet || item.content || "",
         date: item.isoDate || item.pubDate || "",
         link: item.link,
-        tags: matchedTags,
+        tags,
+        badge: tags[0] || "General", // ✅ assign first tag as primary badge
         source: sourceTitle,
       };
-    });
+    })
+    .filter((item) => item.badge !== "General"); // optional: skip completely irrelevant items
 }
 
 export default async function handler(req: any, res: any) {

@@ -22,7 +22,7 @@ export function ContentCard({
   link,
   date,
   badge = "General",
-  tags,
+  tags = [],
   source,
   external = false,
   image,
@@ -54,6 +54,12 @@ export function ContentCard({
     China: "bg-orange-700 text-white",
     Iran: "bg-teal-600 text-white",
     "North Korea": "bg-blue-800 text-white",
+    "United States": "bg-gray-600 text-white",
+    NATO: "bg-sky-700 text-white",
+    Malware: "bg-zinc-800 text-white",
+    Exploit: "bg-orange-600 text-white",
+    Patch: "bg-lime-500 text-black",
+    DDoS: "bg-fuchsia-700 text-white",
     General: "bg-muted text-muted-foreground",
   };
 
@@ -93,8 +99,9 @@ export function ContentCard({
           {description}
         </p>
 
+        {/* Tags and Badge */}
         <div className="flex flex-wrap gap-2 pt-1">
-          {/* Main badge (primary tag or type) */}
+          {/* Main badge */}
           {badge && (
             <span
               className={cn(
@@ -106,18 +113,20 @@ export function ContentCard({
             </span>
           )}
 
-          {/* Supporting tags (categories, locations, actors) */}
-          {tags?.map((tag) => (
-            <span
-              key={tag}
-              className={cn(
-                "text-xs px-2 py-0.5 rounded-full border bg-accent text-accent-foreground",
-                badgeColorMap[tag] ?? ""
-              )}
-            >
-              {tag}
-            </span>
-          ))}
+          {/* Supporting tags — excluding the badge to prevent duplicates */}
+          {tags
+            .filter((tag) => tag !== badge)
+            .map((tag) => (
+              <span
+                key={tag}
+                className={cn(
+                  "text-xs px-2 py-0.5 rounded-full border bg-accent text-accent-foreground",
+                  badgeColorMap[tag] ?? ""
+                )}
+              >
+                {tag}
+              </span>
+            ))}
         </div>
 
         {source && (
@@ -127,6 +136,7 @@ export function ContentCard({
         )}
       </div>
 
+      {/* Link footer */}
       {link && (
         <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline">
           {external ? (

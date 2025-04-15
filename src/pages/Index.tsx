@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import { ContentCard } from "@/components/ContentCard";
 import { HomeSection } from "@/components/HomeSection";
 import { CyberFooterPulse } from "@/components/CyberFooterPulse";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type NewsItem = {
   title: string;
@@ -55,23 +59,30 @@ const threatProfiles = [
 
 const Index = () => {
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
+  const [searchInput, setSearchInput] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("/api/fetch-news")
       .then((res) => res.json())
       .then((data) => {
-        const items: NewsItem[] = data.results || [];
-
+        const items: NewsItem[] = data.results || data || [];
         const sorted = items
           .filter((item) => item.date && !isNaN(new Date(item.date).getTime()))
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
         setLatestNews(sorted.slice(0, 3));
       })
       .catch((err) => {
         console.error("Failed to load latest news on homepage", err);
       });
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchInput.trim())}`);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -87,19 +98,31 @@ const Index = () => {
         </motion.h1>
         <p className="text-lg font-medium text-muted-foreground">
           <strong>
-            CCTIC is a hub for local collaboration, intel sharing, and defense
-            strategy in the Chicagoland area.
+            CCTIC is a hub for local collaboration, intel sharing, and defense strategy in the Chicagoland area.
           </strong>
         </p>
       </div>
 
       {/* Welcome banner */}
-      <div className="mb-10 p-6 border border-border rounded-md bg-secondary/30">
-        <p className="font-medium text-muted-foreground">
-          <strong>Welcome.</strong> Our mission is to improve Chicagoland’s
-          cyber resilience through real-time threat sharing, expert analysis,
-          and a local-first approach to community defense.
+      <div className="mb-6 p-6 border border-border rounded-md bg-secondary/30">
+        <p className="font-medium text-muted-foreground mb-4">
+          <strong>Welcome.</strong> Our mission is to improve Chicagoland’s cyber resilience through real-time threat sharing, expert analysis, and a local-first approach to community defense.
         </p>
+
+        {/* Inline Search */}
+        <form onSubmit={handleSearch} className="flex w-full max-w-md items-center gap-2">
+          <Input
+            type="text"
+            placeholder="Search the site..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" variant="outline">
+            <Search className="h-4 w-4 mr-1" />
+            Search
+          </Button>
+        </form>
       </div>
 
       {/* News */}
@@ -119,7 +142,7 @@ const Index = () => {
                 tags={news.tags}
                 source={news.source}
                 external
-                variant="news" 
+                variant="news"
                 className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
               />
             ))}
@@ -138,7 +161,7 @@ const Index = () => {
               date={report.date}
               tags={report.tags}
               link={report.link}
-              variant="report" 
+              variant="report"
             />
           ))}
         </div>
@@ -153,7 +176,7 @@ const Index = () => {
               title={profile.title}
               description={profile.description}
               link={profile.link}
-              variant="spotlight" 
+              variant="spotlight"
             />
           ))}
         </div>

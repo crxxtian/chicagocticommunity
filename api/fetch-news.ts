@@ -2,15 +2,6 @@ import Parser from "rss-parser";
 
 const parser = new Parser();
 
-// Keyword list for relevance filtering
-const keywords = [
-  "cybersecurity", "ransomware", "malware", "zero-day", "exploit",
-  "breach", "leak", "phishing", "ddos", "cve", "vulnerability", "patch",
-  "CISA", "APT", "nation-state", "threat actor", "critical infrastructure",
-  "chicago", "illinois", "school", "hospital", "gov", "municipality"
-];
-
-// Curated list of trusted cybersecurity RSS feeds
 const rssFeeds = [
   "https://www.bleepingcomputer.com/feed/",
   "https://feeds.feedburner.com/TheHackersNews",
@@ -35,57 +26,96 @@ const rssFeeds = [
   "https://cyberalerts.io/rss/latest-public"
 ];
 
-// Utility: Filter and normalize items
+const tagMap: Record<string, string> = {
+  // Threat types
+  "ransomware": "Ransomware",
+  "malware": "Malware",
+  "phishing": "Phishing",
+  "zero-day": "Zero-Day",
+  "exploit": "Exploit",
+  "backdoor": "Backdoor",
+  "rootkit": "Rootkit",
+  "ddos": "DDoS",
+  "breach": "Data Breach",
+  "cve": "CVE",
+  "vulnerability": "Vulnerability",
+  "patch": "Patch",
+  "Critical": "CRITICAL",
+
+  // Nation-states
+  "china": "China",
+  "russia": "Russia",
+  "iran": "Iran",
+  "north korea": "North Korea",
+  "apt": "APT",
+
+  // Sectors
+  "hospital": "Healthcare",
+  "clinic": "Healthcare",
+  "healthcare": "Healthcare",
+  "school": "Education",
+  "university": "Education",
+  "education": "Education",
+  "government": "Government",
+  "municipality": "Municipality",
+  "infrastructure": "Infrastructure",
+
+  // Regional
+  "chicago": "Chicago",
+  "illinois": "Illinois",
+  "us": "United States",
+  "america": "United States",
+  "nato": "NATO",
+};
+
 function filterRelevantItems(items: any[], source: string, sourceTitle = "Unknown Source") {
   return items
     .filter((item) => {
       const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`.toLowerCase();
-      return keywords.some((kw) => content.includes(kw));
+      return Object.keys(tagMap).some((kw) => content.includes(kw));
     })
     .map((item) => {
-      const lower = `${item.title} ${item.contentSnippet}`.toLowerCase();
-      let category = 'General';
+      const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`.toLowerCase();
 
-      if (source.includes("cisa") || lower.includes("cisa")) category = "CISA";
-      else if (lower.includes("cve") || source.includes("nvd")) category = "CVE";
-      else if (lower.includes("ransomware")) category = "Ransomware";
-      else if (lower.includes("chicago") || lower.includes("illinois")) category = "Chicago";
+      const matchedTags = Array.from(
+        new Set(
+          Object.entries(tagMap)
+            .filter(([kw]) => content.includes(kw))
+            .map(([, tag]) => tag)
+        )
+      );
 
       return {
         title: item.title,
         description: item.contentSnippet || item.content || "",
         date: item.isoDate || item.pubDate || "",
         link: item.link,
-        category,
-        source: sourceTitle
+        tags: matchedTags,
+        source: sourceTitle,
       };
     });
 }
 
 export default async function handler(req: any, res: any) {
   try {
-    const { category = "", search = "", page = 1, limit = 30 } = req.query;
+    const { search = "", page = 1, limit = 30 } = req.query;
 
     const rssResults = await Promise.allSettled(
       rssFeeds.map((url) => parser.parseURL(url))
     );
 
-    const allItems = rssResults
+    const parsedItems = rssResults
       .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
       .flatMap((r) =>
         filterRelevantItems(r.value.items || [], r.value.link || "", r.value.title || "Unknown Source")
       );
 
-    // Filter by category and search term if provided
-    const filtered = allItems.filter(item => {
-      const matchCategory = category ? item.category.toLowerCase() === category.toLowerCase() : true;
-      const matchSearch = search
+    const filtered = parsedItems.filter((item) => {
+      return search
         ? (item.title + item.description).toLowerCase().includes(search.toLowerCase())
         : true;
-      return matchCategory && matchSearch;
     });
 
-    // Deduplicate by link and sort by newest date
     const dedupedSorted = Array.from(
       new Map(
         filtered
@@ -94,13 +124,11 @@ export default async function handler(req: any, res: any) {
       ).values()
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    // Pagination
     const pageNum = parseInt(page as string);
     const pageSize = parseInt(limit as string);
     const start = (pageNum - 1) * pageSize;
     const paged = dedupedSorted.slice(start, start + pageSize);
 
-    // Headers
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate");
 
@@ -108,10 +136,10 @@ export default async function handler(req: any, res: any) {
       total: dedupedSorted.length,
       page: pageNum,
       pageSize,
-      results: paged
+      results: paged,
     });
-  } catch (error: any) {
-    console.error("News Fetch Error:", error);
+  } catch (err: any) {
+    console.error("RSS Fetch Error:", err.message);
     return res.status(500).json({ error: "Failed to fetch cybersecurity news." });
   }
 }

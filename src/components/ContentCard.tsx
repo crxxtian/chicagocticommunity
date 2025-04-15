@@ -1,7 +1,6 @@
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 
 interface ContentCardProps {
@@ -12,8 +11,8 @@ interface ContentCardProps {
   badge?: string;
   tags?: string[];
   source?: string;
-  external?: boolean; // new: distinguish external links
-  image?: string | null; // optional preview
+  external?: boolean;
+  image?: string | null;
   className?: string;
 }
 
@@ -40,11 +39,21 @@ export function ContentCard({
     : null;
 
   const badgeColorMap: Record<string, string> = {
-    Ransomware: "bg-red-500 text-white",
+    Ransomware: "bg-red-600 text-white",
     CVE: "bg-yellow-400 text-black",
     CISA: "bg-blue-600 text-white",
-    APT: "bg-purple-600 text-white",
+    APT: "bg-purple-700 text-white",
     Chicago: "bg-green-600 text-white",
+    Vulnerability: "bg-orange-500 text-white",
+    "Data Breach": "bg-rose-500 text-white",
+    "Zero-Day": "bg-pink-500 text-white",
+    Phishing: "bg-indigo-600 text-white",
+    Healthcare: "bg-emerald-600 text-white",
+    Education: "bg-cyan-600 text-white",
+    Russia: "bg-red-800 text-white",
+    China: "bg-orange-700 text-white",
+    Iran: "bg-teal-600 text-white",
+    "North Korea": "bg-blue-800 text-white",
     General: "bg-muted text-muted-foreground",
   };
 
@@ -53,10 +62,7 @@ export function ContentCard({
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.015 }}
-      transition={{
-        duration: 0.3,
-        ease: "easeOut",
-      }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       viewport={{ once: true }}
       className={cn(
         "border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors h-full flex flex-col justify-between",
@@ -87,21 +93,27 @@ export function ContentCard({
           {description}
         </p>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 pt-1">
+          {/* Main badge (primary tag or type) */}
           {badge && (
             <span
               className={cn(
-                "text-xs font-medium px-2 py-1 rounded",
+                "text-xs font-semibold px-2 py-1 rounded-full border",
                 badgeColorMap[badge] || badgeColorMap["General"]
               )}
             >
               {badge}
             </span>
           )}
+
+          {/* Supporting tags (categories, locations, actors) */}
           {tags?.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center px-2 py-1 text-xs rounded-md bg-accent text-accent-foreground"
+              className={cn(
+                "text-xs px-2 py-0.5 rounded-full border bg-accent text-accent-foreground",
+                badgeColorMap[tag] ?? ""
+              )}
             >
               {tag}
             </span>

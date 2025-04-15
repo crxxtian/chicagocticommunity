@@ -45,7 +45,6 @@ function filterRelevantItems(items: any[], source: string) {
 
 export default async function handler(req: any, res: any) {
   try {
-    // --- NewsAPI ---
     const newsapiRes = await newsapi.v2.everything({
       q: '("cybersecurity" OR "ransomware" OR "breach" OR "CISA") AND (Chicago OR Illinois)',
       searchIn: 'title,description',
@@ -75,22 +74,18 @@ export default async function handler(req: any, res: any) {
       };
     });
 
-    // --- RSS Feeds ---
-    const rssResults = await Promise.allSettled(
-      rssFeeds.map((url) => parser.parseURL(url))
-    );
+    const rssResults = await Promise.allSettled(rssFeeds.map((url) => parser.parseURL(url)));
 
     const rssItems = rssResults
       .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
       .flatMap((r) => filterRelevantItems(r.value.items || [], r.value.link || ""));
 
-    // --- Merge & Deduplicate ---
     const merged = [...newsapiItems, ...rssItems];
     const deduped = Array.from(new Map(merged.map(item => [item.link, item])).values());
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=1800');
-    return res.status(200).json(deduped.slice(0, 30)); // return top 30
+    res.setHeader('Cache-Control', 'no-store'); // <<< no CDN cache
+    return res.status(200).json(deduped.slice(0, 30));
   } catch (err: any) {
     console.error("News Fetch Error:", err);
     res.status(500).json({ error: err.message || "Internal server error" });

@@ -54,9 +54,9 @@ const Index = () => {
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
-    fetch("/api/fetch-news")
+    fetch("/api/fetch-news", { cache: "no-store" })
       .then((res) => res.json())
-      .then((data: NewsItem[]) => setLatestNews(data.slice(0, 3))) // only show 3
+      .then((data: NewsItem[]) => setLatestNews(data.slice(0, 3)))
       .catch((err) => console.error("Failed to load latest news", err));
   }, []);
 

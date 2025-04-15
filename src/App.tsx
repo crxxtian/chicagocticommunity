@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Navbar } from "./components/Navbar";
+
 import Index from "./pages/Index";
 import News from "./pages/News";
 import MiniReports from "./pages/MiniReports";
@@ -15,7 +16,8 @@ import NotFound from "./pages/NotFound";
 import NewsPost from "./pages/NewsPost";
 import MiniReportPost from "./pages/MiniReportPost";
 import DiscussionPost from "./pages/DiscussionPost";
-import Research from "./pages/Research"; 
+import Research from "./pages/Research";
+import Search from "./pages/Search";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,7 @@ const App = () => (
                 <Route path="/resources" element={<Resources />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/research" element={<Research />} />
+                <Route path="/search" element={<Search />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

@@ -119,7 +119,7 @@ const Index = () => {
                 tags={news.tags}
                 source={news.source}
                 external
-                variant="news" // ✅ tall layout for news
+                variant="news" 
                 className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
               />
             ))}
@@ -138,7 +138,7 @@ const Index = () => {
               date={report.date}
               tags={report.tags}
               link={report.link}
-              variant="report" // ✅ tighter for report
+              variant="report" 
             />
           ))}
         </div>
@@ -153,7 +153,7 @@ const Index = () => {
               title={profile.title}
               description={profile.description}
               link={profile.link}
-              variant="spotlight" // ✅ compact layout
+              variant="spotlight" 
             />
           ))}
         </div>

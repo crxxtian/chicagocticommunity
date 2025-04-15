@@ -14,7 +14,7 @@ interface ContentCardProps {
   external?: boolean;
   image?: string | null;
   className?: string;
-  variant?: "news" | "report" | "spotlight"; // 🆕 controls sizing
+  variant?: "news" | "report" | "spotlight";
 }
 
 export function ContentCard({
@@ -28,7 +28,7 @@ export function ContentCard({
   external = false,
   image,
   className,
-  variant = "news", // 🆕 default variant
+  variant = "news",
 }: ContentCardProps) {
   const formattedDate = date
     ? new Date(date).toLocaleString(undefined, {
@@ -39,18 +39,6 @@ export function ContentCard({
         minute: "2-digit",
       })
     : null;
-
-  // 🎨 Smart visual tweaks per variant
-  const clampTitle =
-    variant === "news" ? "line-clamp-4" : "line-clamp-2";
-  const clampDescription =
-    variant === "news" ? "line-clamp-3" : "line-clamp-2";
-  const minHeight =
-    variant === "news"
-      ? "min-h-[360px]"
-      : variant === "report"
-      ? "min-h-[280px]"
-      : "min-h-[240px]";
 
   const badgeColorMap: Record<string, string> = {
     Ransomware: "bg-red-600 text-white",
@@ -77,6 +65,19 @@ export function ContentCard({
     General: "bg-muted text-muted-foreground",
   };
 
+  // Layout styles based on card type
+  const clampTitle = variant === "news" ? "line-clamp-4" : "line-clamp-2";
+  const clampDescription = variant === "news" ? "line-clamp-3" : "line-clamp-2";
+  const minHeight =
+    variant === "news"
+      ? "min-h-[360px]"
+      : variant === "report"
+      ? "min-h-[280px]"
+      : "min-h-[240px]";
+
+  // Combine badge + tags and remove duplicates
+  const allTags = Array.from(new Set([badge, ...tags].filter(Boolean)));
+
   const CardContent = () => (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -89,6 +90,7 @@ export function ContentCard({
         className
       )}
     >
+      {/* Optional image */}
       {image && (
         <img
           src={image}
@@ -98,7 +100,7 @@ export function ContentCard({
       )}
 
       <div className="space-y-2 flex-1">
-        {/* Title & date row */}
+        {/* Title and date */}
         <div className="flex justify-between items-start gap-4">
           <h3
             className={cn(
@@ -127,21 +129,10 @@ export function ContentCard({
           </p>
         )}
 
-        {/* Tags & badge */}
-        <div className="flex flex-wrap gap-2 pt-1">
-          {badge && (
-            <span
-              className={cn(
-                "text-xs font-semibold px-2 py-1 rounded-full border",
-                badgeColorMap[badge] || badgeColorMap["General"]
-              )}
-            >
-              {badge}
-            </span>
-          )}
-          {tags
-            .filter((tag) => tag !== badge)
-            .map((tag) => (
+        {/* Tags */}
+        {allTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {allTags.map((tag) => (
               <span
                 key={tag}
                 className={cn(
@@ -152,9 +143,10 @@ export function ContentCard({
                 {tag}
               </span>
             ))}
-        </div>
+          </div>
+        )}
 
-        {/* Source */}
+        {/* Optional source */}
         {source && (
           <p className="text-xs text-muted-foreground italic pt-1">
             Source: {source}
@@ -162,7 +154,7 @@ export function ContentCard({
         )}
       </div>
 
-      {/* Read more link */}
+      {/* Read more */}
       {link && (
         <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline mt-auto">
           {external ? (
@@ -183,6 +175,7 @@ export function ContentCard({
     </motion.div>
   );
 
+  // If external: render just a div, otherwise wrap in <Link />
   return link && !external ? (
     <Link to={link} className="block h-full">
       {CardContent()}

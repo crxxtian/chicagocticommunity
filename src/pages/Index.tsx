@@ -9,7 +9,8 @@ type NewsItem = {
   description: string;
   date: string;
   link: string;
-  category: string;
+  badge: string;
+  tags?: string[];
   image?: string | null;
   source?: string;
 };
@@ -116,7 +117,8 @@ const Index = () => {
                 description={news.description}
                 date={news.date}
                 link={news.link}
-                badge={news.category}
+                badge={news.badge}
+                tags={news.tags}
                 source={news.source}
                 external
                 className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"

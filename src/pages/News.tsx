@@ -22,7 +22,8 @@ type NewsItem = {
   description: string;
   date: string;
   link: string;
-  category: string;
+  badge: string; // ✅ was 'category'
+  tags?: string[];
   image?: string | null;
   source?: string;
 };
@@ -50,13 +51,13 @@ const News = () => {
         page: reset ? "1" : page.toString(),
         limit: "12",
         ...(searchQuery && { search: searchQuery }),
-        ...(selectedCategory && { category: selectedCategory }),
       });
 
       const res = await fetch(`/api/fetch-news?${params.toString()}`);
       const data: ApiResponse = await res.json();
 
-      setAllNews((prev) => (reset ? data.results : [...prev, ...data.results]));
+      const newResults = reset ? data.results : [...allNews, ...data.results];
+      setAllNews(newResults);
       setHasMore(data.results.length >= 12);
       setPage(reset ? 2 : page + 1);
     } catch (err) {
@@ -67,16 +68,22 @@ const News = () => {
   };
 
   useEffect(() => {
-    fetchNews(true); // initial or reset fetch
-  }, [searchQuery, selectedCategory]);
+    fetchNews(true);
+  }, [searchQuery]);
 
-  const sortedNews = [...allNews].sort((a, b) => {
+  const filtered = selectedCategory
+    ? allNews.filter((item) => item.badge === selectedCategory || item.tags?.includes(selectedCategory))
+    : allNews;
+
+  const sortedNews = [...filtered].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
     return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
   });
 
-  const categories = Array.from(new Set(allNews.map((item) => item.category))).filter(Boolean);
+  const categories = Array.from(
+    new Set(allNews.flatMap((item) => [item.badge, ...(item.tags || [])]))
+  ).filter(Boolean);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -112,7 +119,7 @@ const News = () => {
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0" align="start">
             <Command>
-              <CommandInput placeholder="Search categories..." />
+              <CommandInput placeholder="Search tags..." />
               <CommandList>
                 <CommandEmpty>No category found.</CommandEmpty>
                 <CommandGroup>
@@ -160,7 +167,8 @@ const News = () => {
                 description={news.description}
                 date={news.date}
                 link={news.link}
-                badge={news.category}
+                badge={news.badge}
+                tags={news.tags}
                 image={news.image}
                 source={news.source}
                 external

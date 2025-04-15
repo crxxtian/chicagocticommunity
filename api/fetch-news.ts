@@ -12,7 +12,6 @@ const rssFeeds = [
   "https://www.securityweek.com/feed",
   "https://feeds.feedburner.com/Threatpost",
   "https://cybernews.com/feed/",
-  "https://podcast.darknetdiaries.com/",
   "https://grahamcluley.com/feed/",
   "https://isc.sans.edu/rssfeed_full.xml",
   "https://www.schneier.com/feed/atom/",
@@ -23,17 +22,19 @@ const rssFeeds = [
   "https://www.usom.gov.tr/rss/tehdit.rss",
   "https://www.usom.gov.tr/rss/duyuru.rss",
   "https://feeds.feedburner.com/eset/blog",
-  "https://cyberalerts.io/rss/latest-public"
+  "https://cyberalerts.io/rss/latest-public",
+  "https://www.csoonline.com/index.rss",
+  "https://www.infosecurity-magazine.com/rss/news/",
+  "https://securityaffairs.com/feed",
+  "https://therecord.media/feed",
+  "https://www.bankinfosecurity.com/rss_feed.php"
 ];
 
 const tagAliases: Record<string, string> = {
-  // Nation-states
   china: "China", chinese: "China", prc: "China",
   russia: "Russia", russian: "Russia", moscow: "Russia",
   iran: "Iran", iranian: "Iran", tehran: "Iran",
   "north korea": "North Korea", "north korean": "North Korea", dprk: "North Korea",
-
-  // Threats
   malware: "Malware", "malicious software": "Malware", virus: "Malware",
   ransomware: "Ransomware", exploit: "Exploit",
   "zero-day": "Zero-Day", zeroday: "Zero-Day",
@@ -41,24 +42,23 @@ const tagAliases: Record<string, string> = {
   phishing: "Phishing", "spear phishing": "Phishing",
   ddos: "DDoS", "denial of service": "DDoS",
   breach: "Data Breach", "data leak": "Data Breach",
-
-  // Sectors
   hospital: "Healthcare", clinic: "Healthcare", healthcare: "Healthcare",
   school: "Education", education: "Education", university: "Education",
   government: "Government", municipality: "Municipality", infrastructure: "Infrastructure",
-
-  // Regional
   chicago: "Chicago", illinois: "Illinois",
   usa: "United States", "u.s.": "United States", america: "United States", us: "United States",
-  nato: "NATO"
+  nato: "NATO",
+  espionage: "APT", "threat actor": "APT", apt: "APT",
+  hacktivist: "Hacktivism", "supply chain": "Supply Chain", "data exposure": "Data Breach",
+  bank: "Finance", financial: "Finance", crypto: "Finance"
 };
 
 function extractTags(content: string): string[] {
+  const lower = content.toLowerCase();
   const matched = new Set<string>();
 
   for (const [variant, canonical] of Object.entries(tagAliases)) {
-    const regex = new RegExp(`\\b${variant}\\b`, "i");
-    if (regex.test(content)) {
+    if (lower.includes(variant.toLowerCase())) {
       matched.add(canonical);
     }
   }
@@ -71,8 +71,6 @@ function filterRelevantItems(items: any[], source: string, sourceTitle = "Unknow
     .map((item) => {
       const content = `${item.title || ""} ${item.contentSnippet || item.content || ""}`;
       const tags = extractTags(content);
-      const hasRelevantTags = tags.length > 0;
-
       return {
         title: item.title,
         description: item.contentSnippet || item.content || "",
@@ -83,7 +81,18 @@ function filterRelevantItems(items: any[], source: string, sourceTitle = "Unknow
         source: sourceTitle,
       };
     })
-    .filter((item) => item.badge !== "General"); // Optional: only show items with tags
+    .filter((item) =>
+      item.title &&
+      item.title.length > 20 &&
+      item.description &&
+      item.description.length > 30 &&
+      item.date &&
+      !isNaN(new Date(item.date).getTime()) &&
+      !item.title.toLowerCase().startsWith("cve-") &&
+      !item.link?.includes("nvd.nist.gov") &&
+      !item.source?.toLowerCase().includes("cyberalerts.io") &&
+      item.badge !== "General"
+    );
 }
 
 export default async function handler(req: any, res: any) {
@@ -107,11 +116,7 @@ export default async function handler(req: any, res: any) {
     });
 
     const dedupedSorted = Array.from(
-      new Map(
-        filtered
-          .filter(item => item.date && !isNaN(new Date(item.date).getTime()))
-          .map(item => [item.link, item])
-      ).values()
+      new Map(filtered.map(item => [item.link, item])).values()
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     const pageNum = parseInt(page as string);

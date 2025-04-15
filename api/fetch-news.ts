@@ -83,7 +83,7 @@ export default async function handler(req: any, res: any) {
     const deduped = Array.from(new Map(merged.map(item => [item.link, item])).values());
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); // 5 min freshness
+    // res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); // 5 min freshness
     return res.status(200).json(deduped.slice(0, 30));
   } catch (err: any) {
     console.error("News Fetch Error:", err);

@@ -67,11 +67,11 @@ export function ContentCard({
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.015 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
       viewport={{ once: true }}
       className={cn(
-        "h-full min-h-[260px] flex flex-col justify-between border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors",
+        "h-full min-h-[300px] flex flex-col justify-between border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors",
         className
       )}
     >
@@ -85,8 +85,8 @@ export function ContentCard({
 
       <div className="space-y-2 flex-1">
         {/* Title and Date */}
-        <div className="flex justify-between items-start">
-          <h3 className="font-mono font-medium text-base md:text-lg line-clamp-2">
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="font-mono font-semibold text-base md:text-lg leading-snug line-clamp-3">
             {title}
           </h3>
           {formattedDate && (
@@ -96,13 +96,15 @@ export function ContentCard({
           )}
         </div>
 
-        {/* Description (conditionally shown) */}
+        {/* Description */}
         {description ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
             {description}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No summary available.</p>
+          <p className="text-sm text-muted-foreground italic">
+            No summary available.
+          </p>
         )}
 
         {/* Tags and Badge */}
@@ -117,6 +119,7 @@ export function ContentCard({
               {badge}
             </span>
           )}
+
           {tags
             .filter((tag) => tag !== badge)
             .map((tag) => (
@@ -140,7 +143,7 @@ export function ContentCard({
         )}
       </div>
 
-      {/* Read More */}
+      {/* Read more link */}
       {link && (
         <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline mt-auto">
           {external ? (

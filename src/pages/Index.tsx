@@ -54,6 +54,7 @@ const threatProfiles = [
 
 const Index = () => {
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
+  const [refreshNews, setRefreshNews] = useState(0);
 
   useEffect(() => {
     const cb = Date.now();
@@ -71,10 +72,11 @@ const Index = () => {
       .catch((err) => {
         console.error("Failed to load latest news on homepage", err);
       });
-  }, []);
+  }, [refreshNews]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <button onClick={() => setRefreshNews(refreshNews + 1)}>Refresh News</button>
       {/* Title & intro */}
       <div className="mb-12 max-w-3xl">
         <motion.h1

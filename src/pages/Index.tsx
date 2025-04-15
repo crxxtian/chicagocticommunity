@@ -54,29 +54,26 @@ const threatProfiles = [
 
 const Index = () => {
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
-  const [refreshNews, setRefreshNews] = useState(0);
 
   useEffect(() => {
-    const cb = Date.now();
-    console.log("Fetching homepage news with cache-buster:", cb);
-
-    fetch(`/api/fetch-news?cb=${cb}`)
-      .then((res) => {
-        console.log("API response status:", res.status);
-        return res.json();
-      })
+    fetch("/api/fetch-news")
+      .then((res) => res.json())
       .then((data: NewsItem[]) => {
-        console.log("News fetched for homepage:", data.slice(0, 3));
-        setLatestNews(data.slice(0, 3));
+        const sorted = data
+          .filter((item) => item.date && !isNaN(new Date(item.date).getTime()))
+          .sort(
+            (a, b) =>
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+        setLatestNews(sorted.slice(0, 3));
       })
       .catch((err) => {
         console.error("Failed to load latest news on homepage", err);
       });
-  }, [refreshNews]);
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button onClick={() => setRefreshNews(refreshNews + 1)}>Refresh News</button>
       {/* Title & intro */}
       <div className="mb-12 max-w-3xl">
         <motion.h1
@@ -89,7 +86,8 @@ const Index = () => {
         </motion.h1>
         <p className="text-lg font-medium text-muted-foreground">
           <strong>
-            CCTIC is a hub for local collaboration, intel sharing, and defense strategy in the Chicagoland area.
+            CCTIC is a hub for local collaboration, intel sharing, and defense
+            strategy in the Chicagoland area.
           </strong>
         </p>
       </div>
@@ -97,7 +95,9 @@ const Index = () => {
       {/* Welcome banner */}
       <div className="mb-10 p-6 border border-border rounded-md bg-secondary/30">
         <p className="font-medium text-muted-foreground">
-          <strong>Welcome.</strong> Our mission is to improve Chicagoland’s cyber resilience through real-time threat sharing, expert analysis, and a local-first approach to community defense.
+          <strong>Welcome.</strong> Our mission is to improve Chicagoland’s
+          cyber resilience through real-time threat sharing, expert analysis,
+          and a local-first approach to community defense.
         </p>
       </div>
 
@@ -115,6 +115,9 @@ const Index = () => {
                 date={news.date}
                 link={news.link}
                 badge={news.category}
+                source={news.source}
+                external
+                className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
               />
             ))}
           </div>

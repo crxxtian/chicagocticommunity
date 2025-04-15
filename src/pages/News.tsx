@@ -27,54 +27,56 @@ type NewsItem = {
   source?: string;
 };
 
+type ApiResponse = {
+  results: NewsItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
 
 const News = () => {
   const [allNews, setAllNews] = useState<NewsItem[]>([]);
-  const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/fetch-news")
-      .then((res) => res.json())
-      .then((data: NewsItem[]) => {
-        setAllNews(data);
-        setFilteredNews(data);
-      })
-      .catch((err) => {
-        console.error("Failed to load news", err);
+  const fetchNews = async (reset = false) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: reset ? "1" : page.toString(),
+        limit: "12",
+        ...(searchQuery && { search: searchQuery }),
+        ...(selectedCategory && { category: selectedCategory }),
       });
-  }, []);
+
+      const res = await fetch(`/api/fetch-news?${params.toString()}`);
+      const data: ApiResponse = await res.json();
+
+      setAllNews((prev) => (reset ? data.results : [...prev, ...data.results]));
+      setHasMore(data.results.length >= 12);
+      setPage(reset ? 2 : page + 1);
+    } catch (err) {
+      console.error("Failed to load news", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let result = [...allNews];
+    fetchNews(true); // initial or reset fetch
+  }, [searchQuery, selectedCategory]);
 
-    if (selectedCategory) {
-      result = result.filter((item) => item.category === selectedCategory);
-    }
+  const sortedNews = [...allNews].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+  });
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query) ||
-          item.description.toLowerCase().includes(query)
-      );
-    }
-
-    result.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
-    });
-
-    setFilteredNews(result);
-  }, [searchQuery, selectedCategory, sortOrder, allNews]);
-
-  const categories = Array.from(
-    new Set(allNews.map((item) => item.category))
-  ).filter(Boolean);
+  const categories = Array.from(new Set(allNews.map((item) => item.category))).filter(Boolean);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -93,7 +95,10 @@ const News = () => {
           <Input
             placeholder="Search news..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             className="pl-9"
           />
         </div>
@@ -111,30 +116,11 @@ const News = () => {
               <CommandList>
                 <CommandEmpty>No category found.</CommandEmpty>
                 <CommandGroup>
-                  <CommandItem
-                    onSelect={() => setSelectedCategory("")}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <div
-                      className={`w-2 h-2 rounded-full ${
-                        selectedCategory === "" ? "bg-green-500" : "bg-gray-300"
-                      }`}
-                    ></div>
+                  <CommandItem onSelect={() => setSelectedCategory("")}>
                     <span>All Categories</span>
                   </CommandItem>
                   {categories.map((category) => (
-                    <CommandItem
-                      key={category}
-                      onSelect={() => setSelectedCategory(category)}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          selectedCategory === category
-                            ? "bg-green-500"
-                            : "bg-gray-300"
-                        }`}
-                      ></div>
+                    <CommandItem key={category} onSelect={() => setSelectedCategory(category)}>
                       <span>{category}</span>
                     </CommandItem>
                   ))}
@@ -147,9 +133,7 @@ const News = () => {
         <Button
           variant="outline"
           className="w-full sm:w-auto flex items-center gap-2"
-          onClick={() =>
-            setSortOrder(sortOrder === "desc" ? "asc" : "desc")
-          }
+          onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
         >
           <Calendar className="h-4 w-4 text-amber-500" />
           <span>Date</span>
@@ -162,29 +146,37 @@ const News = () => {
       </div>
 
       {/* Results */}
-      {filteredNews.length === 0 ? (
+      {sortedNews.length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-md">
-          <p className="text-muted-foreground">
-            No news items found matching your criteria.
-          </p>
+          <p className="text-muted-foreground">No news items found matching your criteria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredNews.map((news, index) => (
-            <ContentCard
-            key={index}
-            title={news.title}
-            description={news.description}
-            date={news.date}
-            link={news.link}
-            badge={news.category}
-            image={news.image}
-            source={news.source}
-            external // ensures external links use <a> not <Link>
-            className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
-          />          
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedNews.map((news, index) => (
+              <ContentCard
+                key={index}
+                title={news.title}
+                description={news.description}
+                date={news.date}
+                link={news.link}
+                badge={news.category}
+                image={news.image}
+                source={news.source}
+                external
+                className="hover:shadow-md transition-shadow duration-200 hover:border-blue-200 dark:hover:border-blue-800"
+              />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center mt-8">
+              <Button onClick={() => fetchNews()} disabled={loading}>
+                {loading ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -5,7 +5,12 @@ import { motion } from "framer-motion";
 import { Filter, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { HomeSection } from "@/components/HomeSection";
 import Modal from "@/components/Modal";
 import ReactMarkdown from "react-markdown";
@@ -41,11 +46,6 @@ type ArxivPaper = {
   link: string;
 };
 
-type CertTeam = {
-  name: string;
-  url: string;
-};
-
 type SectorStat = {
   sector: string;
   count: number;
@@ -53,63 +53,38 @@ type SectorStat = {
 
 export default function Research() {
   const [victims, setVictims] = useState<Victim[]>([]);
+  const [sectorStats, setSectorStats] = useState<SectorStat[]>([]);
   const [sectorFilter, setSectorFilter] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actorDetails, setActorDetails] = useState<ThreatActor | null>(null);
   const [papers, setPapers] = useState<ArxivPaper[]>([]);
-  const [certs, setCerts] = useState<CertTeam[]>([]);
-  const [sectorStats, setSectorStats] = useState<SectorStat[]>([]);
 
   const modalContent: Record<string, ThreatActor> = {
     RansomHouse: {
       title: "RansomHouse",
       content: `**RansomHouse** is an extortion group known for stealing sensitive data without necessarily encrypting systems.
 
-In March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.
-
-### Key TTPs
-- Double-extortion without ransomware deployment
-- Data leak sites on darknet (.onion)
-
-### IOCs
-- File Extensions: \`.XVGV\`, \`.dump\`, \`.backup\`
-- Ransom Notes: *HowToRestore.txt*
-- Tools: Mimikatz, PowerShell discovery
-- Leak site: \`xw7au5p...onion\``,
+In March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.`,
     },
     LockBit: {
       title: "LockBit",
       content: `**LockBit** is one of the most active RaaS (Ransomware-as-a-Service) operations globally.
 
-It has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.
-
-### Key TTPs
-- RaaS model with LockBit 3.0 and custom builds
-- Use of group policy tampering and self-delete flags
-
-### IOCs
-- Flags: \`-del\`, \`-gdel\`
-- Registry: \`HKCU\\Control Panel\\Desktop\\WallPaper\`
-- Mutex: \`Global<hash>\`
-- File Drop Paths: \`ADMIN$\\Temp\\\`, \`%SystemRoot%\\Temp\\\``,
+It has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.`,
     },
   };
 
   useEffect(() => {
-    fetch("/api/ransomware?type=recentvictims&country=US")
-      .then((res) => res.json())
-      .then((data) => setVictims(Array.isArray(data) ? data.slice(0, 30) : []))
-      .catch((err) => console.error("Victim fetch failed", err));
-
-    fetch("/api/ransomware?type=certs&country=US")
+    fetch("/api/ransomware?type=combined&country=US")
       .then((res) => res.json())
       .then((data) => {
-        const filtered = Array.isArray(data)
-          ? data.filter((team: any) => typeof team.name === "string" && typeof team.url === "string")
-          : [];
-        setCerts(filtered.slice(0, 24));
+        setVictims(Array.isArray(data.victims) ? data.victims.slice(0, 30) : []);
+        const sectors = Object.entries(data.sectors || {})
+          .map(([sector, count]) => ({ sector, count: Number(count) }))
+          .sort((a, b) => b.count - a.count);
+        setSectorStats(sectors.slice(0, 10));
       })
-      .catch((err) => console.error("CERT fetch failed", err));
+      .catch((err) => console.error("Combined fetch failed", err));
 
     fetch("/api/arxiv")
       .then((res) => res.json())
@@ -120,16 +95,6 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         setPapers(valid.slice(0, 8));
       })
       .catch((err) => console.error("arXiv fetch failed", err));
-
-    fetch("https://api.ransomware.live/v2/sectors")
-      .then((res) => res.json())
-      .then((data) => {
-        const sorted = Object.entries(data)
-          .map(([sector, count]) => ({ sector, count: Number(count) }))
-          .sort((a, b) => b.count - a.count);
-        setSectorStats(sorted.slice(0, 10));
-      })
-      .catch((err) => console.error("Sector stats fetch failed", err));
   }, []);
 
   const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
@@ -141,9 +106,26 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
       {
         label: "Victim Count",
         data: sectorStats.map((s) => s.count),
-        backgroundColor: "rgba(255, 99, 132, 0.5)",
+        backgroundColor: "rgba(255, 99, 132, 0.6)",
+        borderRadius: 4,
       },
     ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => `${ctx.dataset.label}: ${ctx.raw}`,
+        },
+      },
+    },
+    scales: {
+      x: { ticks: { font: { family: "monospace" } } },
+      y: { beginAtZero: true },
+    },
   };
 
   return (
@@ -249,7 +231,9 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
 
       {sectorStats.length > 0 && (
         <HomeSection title="Top Targeted Sectors">
-          <Bar data={sectorChartData} />
+          <div className="bg-muted/10 p-6 rounded-lg border">
+            <Bar data={sectorChartData} options={chartOptions} />
+          </div>
         </HomeSection>
       )}
 

@@ -14,17 +14,16 @@ import {
 import { HomeSection } from "@/components/HomeSection";
 import Modal from "@/components/Modal";
 import ReactMarkdown from "react-markdown";
-import { Bar } from "react-chartjs-2";
+
 import {
   Chart as ChartJS,
-  BarElement,
-  CategoryScale,
-  LinearScale,
+  ArcElement,
   Tooltip,
   Legend,
 } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 type Victim = {
   victim: string;
@@ -107,48 +106,37 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
     ? victims.filter((v) => v.activity === sectorFilter)
     : victims;
 
-  const sectorChartData = {
+  const doughnutChartData = {
     labels: sectorStats.map((s) => s.sector),
     datasets: [
       {
         label: "Victim Count",
         data: sectorStats.map((s) => s.count),
-        backgroundColor: "#e11d48",
-        borderRadius: 6,
+        backgroundColor: [
+          "#f87171", "#fb923c", "#facc15", "#4ade80", "#60a5fa",
+          "#a78bfa", "#f472b6", "#38bdf8", "#34d399", "#c084fc", "#fde68a", "#a3e635"
+        ],
+        borderWidth: 0,
       },
     ],
   };
 
-  const chartOptions = {
+  const doughnutOptions = {
     responsive: true,
     plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx: any) => `${ctx.dataset.label}: ${ctx.raw}`,
-        },
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
+      legend: {
+        position: "bottom",
+        labels: {
+          color: "#d1d5db",
           font: { family: "monospace" },
-          color: "#d1d5db",
-          maxRotation: 35,
-          minRotation: 15,
-        },
-        grid: {
-          color: "rgba(255,255,255,0.05)",
         },
       },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: "#d1d5db",
-          stepSize: 250,
-        },
-        grid: {
-          color: "rgba(255,255,255,0.05)",
+      tooltip: {
+        backgroundColor: "#1f2937",
+        titleColor: "#f3f4f6",
+        bodyColor: "#d1d5db",
+        callbacks: {
+          label: (ctx: any) => `${ctx.label}: ${ctx.raw} victims`,
         },
       },
     },
@@ -257,8 +245,10 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
 
       {sectorStats.length > 0 && (
         <HomeSection title="Top Targeted Sectors">
-          <div className="bg-muted/10 p-6 rounded-lg border">
-            <Bar data={sectorChartData} options={chartOptions} />
+          <div className="bg-muted/10 p-6 rounded-lg border flex justify-center items-center">
+            <div className="w-full max-w-md sm:max-w-lg">
+              <Doughnut data={doughnutChartData} options={doughnutOptions} />
+            </div>
           </div>
         </HomeSection>
       )}

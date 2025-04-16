@@ -3,7 +3,7 @@ export const config = {
   };
   
   export default async function handler(req: Request): Promise<Response> {
-    // CORS preflight handling
+    // Handle preflight CORS
     if (req.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -15,8 +15,9 @@ export const config = {
       });
     }
   
-    const query = encodeURIComponent("cybersecurity");
-    const url = `https://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending`;
+    // Grab from Cryptography & Security category
+    const query = encodeURIComponent("cat:cs.CR");
+    const url = `https://export.arxiv.org/api/query?search_query=${query}&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending`;
   
     try {
       const res = await fetch(url);

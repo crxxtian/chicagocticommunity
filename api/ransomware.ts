@@ -34,16 +34,17 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const raw = await apiResponse.json();
+
     const result = Array.isArray(raw)
       ? raw
       : raw?.victims || raw?.data || raw;
 
     const filtered =
-      type === "recentvictims" || type === "history"
+      (type === "recentvictims" || type === "history") && Array.isArray(result)
         ? result.filter((v: any) => ALLOWED_COUNTRIES.includes(v.country))
         : result;
 
-    return new Response(JSON.stringify(filtered), {
+    return new Response(JSON.stringify(filtered ?? []), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

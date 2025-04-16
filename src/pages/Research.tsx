@@ -58,8 +58,7 @@ In March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospit
 - File Extensions: \`.XVGV\`, \`.dump\`, \`.backup\`
 - Ransom Notes: *HowToRestore.txt*
 - Tools: Mimikatz, PowerShell discovery
-- Leak site: \`xw7au5p...onion\`
-`,
+- Leak site: \`xw7au5p...onion\``,
     },
     LockBit: {
       title: "LockBit",
@@ -82,21 +81,27 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
   useEffect(() => {
     fetch("/api/ransomware?type=recentvictims&country=US")
       .then((res) => res.json())
-      .then((data) => setVictims(data.slice(0, 30)))
+      .then((data) => setVictims(Array.isArray(data) ? data.slice(0, 30) : []))
       .catch((err) => console.error("Victim fetch failed", err));
 
     fetch("/api/ransomware?type=certs&country=US")
       .then((res) => res.json())
       .then((data) => {
         const filtered = Array.isArray(data)
-          ? data.filter((team: any) => team.name && team.url)
+          ? data.filter((team: any) => typeof team.name === "string" && typeof team.url === "string")
           : [];
-        setCerts(filtered.slice(0, 20));
-      });
+        setCerts(filtered.slice(0, 24));
+      })
+      .catch((err) => console.error("CERT fetch failed", err));
 
     fetch("/api/arxiv?query=cybersecurity")
       .then((res) => res.json())
-      .then((data) => setPapers(data.slice(0, 8)))
+      .then((data) => {
+        const valid = Array.isArray(data)
+          ? data.filter((d) => d.title && d.summary && d.link)
+          : [];
+        setPapers(valid.slice(0, 8));
+      })
       .catch((err) => console.error("arXiv fetch failed", err));
   }, []);
 
@@ -112,7 +117,8 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         </p>
       </motion.div>
 
-      <HomeSection title="Threat Actor Spotlights" linkTo="#">
+      {/* Threat Actor Spotlight */}
+      <HomeSection title="Threat Actor Spotlights">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.keys(modalContent).map((actor) => (
             <div
@@ -136,86 +142,98 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         </div>
       </HomeSection>
 
-      <HomeSection title="Cybersecurity Research Papers" linkTo="#">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {papers.map((paper, i) => (
-            <div key={i} className="border border-border p-4 rounded-md bg-secondary/50 space-y-2">
-              <h3 className="font-mono font-medium text-base">{paper.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-5">{paper.summary}</p>
-              <a
-                href={paper.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm underline text-blue-500"
-              >
-                Read full paper
-              </a>
-            </div>
-          ))}
-        </div>
-      </HomeSection>
-
-      <HomeSection title="Recent Ransomware Activity" linkTo="#">
-        <div className="mb-4 flex items-center justify-between">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9">
-                <Filter className="h-4 w-4 mr-2" />
-                {sectorFilter || "Filter Sector"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setSectorFilter(null)}>All Sectors</DropdownMenuItem>
-              {uniqueSectors.map((sector) => (
-                <DropdownMenuItem key={sector} onClick={() => setSectorFilter(sector)}>
-                  {sector}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className="space-y-4">
-          {filteredVictims.map((v) => (
-            <div key={v.victim + v.attackdate} className="border border-border p-4 rounded-md bg-background/40">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-mono font-medium">{v.victim}</h3>
-                <Badge variant="outline">{v.group}</Badge>
+      {/* Research Papers */}
+      {papers.length > 0 && (
+        <HomeSection title="Cybersecurity Research Papers">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {papers.map((paper, i) => (
+              <div key={i} className="border border-border p-4 rounded-md bg-secondary/50 space-y-2">
+                <h3 className="font-mono font-medium text-base">{paper.title}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-5">{paper.summary}</p>
+                <a
+                  href={paper.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm underline text-blue-500"
+                >
+                  Read full paper
+                </a>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Sector: <strong>{v.activity || "Unknown"}</strong> • {v.attackdate}
-              </p>
-              <a
-                href={v.claim_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-500 underline pt-1 block"
-              >
-                View breach record
-              </a>
-            </div>
-          ))}
-        </div>
-      </HomeSection>
+            ))}
+          </div>
+        </HomeSection>
+      )}
 
-      <HomeSection title="CERT/CSIRT Directory" linkTo="#">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {certs.map((team, i) => (
-            <div key={i} className="border border-border p-4 rounded-md bg-secondary/50">
-              <h3 className="font-mono font-medium text-base mb-1">{team.name}</h3>
-              <a
-                href={team.url}
-                className="text-sm text-blue-500 underline break-words"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {team.url}
-              </a>
-            </div>
-          ))}
-        </div>
-      </HomeSection>
+      {/* Ransomware */}
+      {victims.length > 0 && (
+        <HomeSection title="Recent Ransomware Activity">
+          <div className="mb-4 flex items-center justify-between">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-9">
+                  <Filter className="h-4 w-4 mr-2" />
+                  {sectorFilter || "Filter Sector"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setSectorFilter(null)}>All Sectors</DropdownMenuItem>
+                {uniqueSectors.map((sector) => (
+                  <DropdownMenuItem key={sector} onClick={() => setSectorFilter(sector)}>
+                    {sector}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
+          <div className="space-y-4">
+            {filteredVictims.map((v) => (
+              <div key={`${v.victim}-${v.attackdate}`} className="border border-border p-4 rounded-md bg-background/40">
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="font-mono font-medium">{v.victim || "Unknown Victim"}</h3>
+                  <Badge variant="outline">{v.group}</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Sector: <strong>{v.activity || "Unknown"}</strong> • {v.attackdate}
+                </p>
+                {v.claim_url && (
+                  <a
+                    href={v.claim_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-500 underline pt-1 block"
+                  >
+                    View breach record
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </HomeSection>
+      )}
+
+      {/* CERTs */}
+      {certs.length > 0 && (
+        <HomeSection title="CERT/CSIRT Directory">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {certs.map((team, i) => (
+              <div key={i} className="border border-border p-4 rounded-md bg-secondary/50">
+                <h3 className="font-mono font-medium text-base mb-1">{team.name}</h3>
+                <a
+                  href={team.url}
+                  className="text-sm text-blue-500 underline break-words"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {team.url}
+                </a>
+              </div>
+            ))}
+          </div>
+        </HomeSection>
+      )}
+
+      {/* Modal */}
       {actorDetails && (
         <Modal
           title={actorDetails.title}

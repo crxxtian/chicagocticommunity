@@ -2,95 +2,51 @@ export const config = {
     runtime: "edge",
   };
   
-  const ARXIV_ENDPOINT = "https://export.arxiv.org/api/query";
-  
   export default async function handler(req: Request): Promise<Response> {
-    const url = new URL(req.url);
-    const search = url.searchParams.get("search") || "cybersecurity";
-    const max = url.searchParams.get("max") || "8";
-    const start = url.searchParams.get("start") || "0";
+    const { searchParams } = new URL(req.url);
+    const query = searchParams.get("query") || "cybersecurity";
   
-    const queryURL = `${ARXIV_ENDPOINT}?search_query=all:${encodeURIComponent(
-      search
-    )}&start=${start}&max_results=${max}`;
+    const arxivUrl = `http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
+      query
+    )}&start=0&max_results=10`;
   
     try {
-      const arxivRes = await fetch(queryURL);
+      const response = await fetch(arxivUrl);
+      const xml = await response.text();
   
-      if (!arxivRes.ok) {
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch arXiv data" }),
-          {
-            status: arxivRes.status,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          }
-        );
-      }
+      // Parse the Atom XML into a simple object
+      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map((match) => {
+        const entry = match[1];
   
-      const xml = await arxivRes.text();
-      const parsed = await parseArxiv(xml);
+        const getTag = (tag: string) =>
+          entry.match(new RegExp(`<${tag}>(.*?)</${tag}>`))?.[1] || "No data";
   
-      return new Response(JSON.stringify(parsed), {
+        const getLink = () =>
+          entry.match(/<link[^>]+href="(http[^"]+)"[^>]*rel="alternate"/)?.[1] || "";
+  
+        return {
+          title: getTag("title").replace(/\n/g, " ").trim(),
+          summary: getTag("summary").replace(/\n/g, " ").trim(),
+          link: getLink(),
+        };
+      });
+  
+      return new Response(JSON.stringify(entries), {
         status: 200,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
       });
-    } catch (err: any) {
-      console.error("arXiv API error:", err);
-      return new Response(
-        JSON.stringify({ error: err.message || "Internal Server Error" }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
+    } catch (error: any) {
+      console.error("Arxiv API Error:", error);
+      return new Response(JSON.stringify({ error: "Failed to fetch arXiv data" }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
-  }
-  
-  async function parseArxiv(xml: string): Promise<
-    {
-      id: string;
-      title: string;
-      summary: string;
-      published: string;
-      authors: string[];
-      link: string;
-      pdf: string | null;
-    }[]
-  > {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "application/xml");
-    const entries = Array.from(doc.getElementsByTagName("entry"));
-  
-    return entries.map((entry) => {
-      const getText = (tag: string) =>
-        entry.getElementsByTagName(tag)?.[0]?.textContent || "";
-  
-      const authors = Array.from(entry.getElementsByTagName("author")).map(
-        (a) => a.getElementsByTagName("name")?.[0]?.textContent || ""
-      );
-  
-      const links = Array.from(entry.getElementsByTagName("link"));
-      const pdf = links.find((l) => l.getAttribute("title") === "pdf")?.getAttribute("href") || null;
-      const link = links.find((l) => l.getAttribute("rel") === "alternate")?.getAttribute("href") || "";
-  
-      return {
-        id: getText("id"),
-        title: getText("title").replace(/\s+/g, " ").trim(),
-        summary: getText("summary").replace(/\s+/g, " ").trim(),
-        published: getText("published"),
-        authors,
-        link,
-        pdf,
-      };
-    });
   }
   

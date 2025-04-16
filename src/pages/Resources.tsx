@@ -134,20 +134,12 @@ const resources = [
     },
     {
       id: 14,
-      title: "MA State Police - Digital Services / Cyber Incident Response",
-      description: "Massachusetts Digital Services supports critical infrastructure cybersecurity and cybercrime investigation statewide.",
-      type: "link",
-      link: "https://www.mass.gov/orgs/digital-services",
-      category: "Incident Response"
-    },
-    {
-      id: 15,
       title: "CERT Division - Carnegie Mellon University (SEI)",
       description: "The CERT Division at the SEI leads national R&D in cybersecurity, trusted by federal agencies and critical infrastructure partners.",
       type: "link",
       link: "https://www.sei.cmu.edu/about/divisions/cert/index.cfm",
       category: "Research"
-    }    
+    }
 ];
 
 

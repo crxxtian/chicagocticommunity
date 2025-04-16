@@ -46,49 +46,58 @@ export default function Research() {
   const modalContent: Record<string, ThreatActor> = {
     RansomHouse: {
       title: "RansomHouse",
-      content: `**RansomHouse** claimed responsibility for the March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of sensitive medical data.
+      content: `**RansomHouse** is an extortion group known for stealing sensitive data without necessarily encrypting systems.
 
-RansomHouse conducts data exfiltration attacks and targets healthcare orgs like Loretto Hospital. The group demands payment for not leaking data.
+In March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.
 
-**IOCs**
-- \`.XVGV\`, \`.dump\`, \`.backup\`
-- **Ransom Note**: HowToRestore.txt
-- **TTPs**: Mimikatz, credential dumping, PowerShell system discovery.`,
+### Key TTPs
+- Double-extortion without ransomware deployment
+- Data leak sites on darknet (.onion)
+
+### IOCs
+- File Extensions: \`.XVGV\`, \`.dump\`, \`.backup\`
+- Ransom Notes: *HowToRestore.txt*
+- Tools: Mimikatz, PowerShell discovery
+- Leak site: \`xw7au5p...onion\`
+`,
     },
     LockBit: {
       title: "LockBit",
-      content: `**LockBit** remains one of the most active ransomware groups globally. Several manufacturing and logistics companies in the Midwest have been recent victims.
+      content: `**LockBit** is one of the most active RaaS (Ransomware-as-a-Service) operations globally.
 
-Known for its **Ransomware-as-a-Service (RaaS)** model, LockBit has attacked CDW and Illinois state agencies.
+It has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.
 
-**IOCs**
-- ` + "`-del`" + `, ` + "`-gdel`" + ` flags
-- Registry: ` + "`HKCU\\Control Panel\\Desktop\\WallPaper`"
-      },
+### Key TTPs
+- RaaS model with LockBit 3.0 and custom builds
+- Use of group policy tampering and self-delete flags
+
+### IOCs
+- Flags: \`-del\`, \`-gdel\`
+- Registry: \`HKCU\\Control Panel\\Desktop\\WallPaper\`
+- Mutex: \`Global<hash>\`
+- File Drop Paths: \`ADMIN$\\Temp\\\`, \`%SystemRoot%\\Temp\\\``,
+    },
   };
 
   useEffect(() => {
     fetch("/api/ransomware?type=recentvictims&country=US")
       .then((res) => res.json())
-      .then((data) => {
-        setVictims(data.slice(0, 30));
-      })
+      .then((data) => setVictims(data.slice(0, 30)))
       .catch((err) => console.error("Victim fetch failed", err));
 
     fetch("/api/ransomware?type=certs&country=US")
       .then((res) => res.json())
       .then((data) => {
-        const list = Array.isArray(data)
-          ? data.filter((team: any) => team.email && team.url)
+        const filtered = Array.isArray(data)
+          ? data.filter((team: any) => team.name && team.url)
           : [];
-        setCerts(list.slice(0, 16));
+        setCerts(filtered.slice(0, 20));
       });
 
     fetch("/api/arxiv?query=cybersecurity")
       .then((res) => res.json())
-      .then((data) => {
-        setPapers(data.slice(0, 8));
-      });
+      .then((data) => setPapers(data.slice(0, 8)))
+      .catch((err) => console.error("arXiv fetch failed", err));
   }, []);
 
   const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
@@ -96,15 +105,13 @@ Known for its **Ransomware-as-a-Service (RaaS)** model, LockBit has attacked CDW
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-      {/* Title */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <h1 className="text-4xl font-mono font-bold mb-4">Cyber Threat Research</h1>
         <p className="text-muted-foreground max-w-2xl">
-          Ongoing investigation into threat actors, ransomware groups, and targeted campaigns affecting Illinois, the Midwest, and critical U.S. sectors.
+          Investigating threat actors, ransomware campaigns, and ongoing breaches with a focus on Illinois, the Midwest, and North America.
         </p>
       </motion.div>
 
-      {/* Actor Spotlights */}
       <HomeSection title="Threat Actor Spotlights" linkTo="#">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.keys(modalContent).map((actor) => (
@@ -129,23 +136,26 @@ Known for its **Ransomware-as-a-Service (RaaS)** model, LockBit has attacked CDW
         </div>
       </HomeSection>
 
-      {/* Research Papers */}
-      <HomeSection title="Cybersecurity Research Papers" description="Explorations of advanced cybersecurity topics and community research.">
+      <HomeSection title="Cybersecurity Research Papers" linkTo="#">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {papers.map((paper, i) => (
             <div key={i} className="border border-border p-4 rounded-md bg-secondary/50 space-y-2">
               <h3 className="font-mono font-medium text-base">{paper.title}</h3>
               <p className="text-sm text-muted-foreground line-clamp-5">{paper.summary}</p>
-              <a href={paper.link} target="_blank" rel="noopener noreferrer" className="text-sm underline text-blue-500">
-                Read paper
+              <a
+                href={paper.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm underline text-blue-500"
+              >
+                Read full paper
               </a>
             </div>
           ))}
         </div>
       </HomeSection>
 
-      {/* Ransomware Activity */}
-      <HomeSection title="Recent Ransomware Activity" description="Live data from API. Filtered for US-based victims.">
+      <HomeSection title="Recent Ransomware Activity" linkTo="#">
         <div className="mb-4 flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -175,7 +185,12 @@ Known for its **Ransomware-as-a-Service (RaaS)** model, LockBit has attacked CDW
               <p className="text-sm text-muted-foreground">
                 Sector: <strong>{v.activity || "Unknown"}</strong> • {v.attackdate}
               </p>
-              <a href={v.claim_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline pt-1 block">
+              <a
+                href={v.claim_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-500 underline pt-1 block"
+              >
                 View breach record
               </a>
             </div>
@@ -183,13 +198,17 @@ Known for its **Ransomware-as-a-Service (RaaS)** model, LockBit has attacked CDW
         </div>
       </HomeSection>
 
-      {/* CERT Directory */}
-      <HomeSection title="CERT/CSIRT Directory" description="Major U.S. incident response teams.">
+      <HomeSection title="CERT/CSIRT Directory" linkTo="#">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {certs.map((team, i) => (
             <div key={i} className="border border-border p-4 rounded-md bg-secondary/50">
               <h3 className="font-mono font-medium text-base mb-1">{team.name}</h3>
-              <a href={team.url} className="text-sm text-blue-500 underline break-words" target="_blank" rel="noopener noreferrer">
+              <a
+                href={team.url}
+                className="text-sm text-blue-500 underline break-words"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {team.url}
               </a>
             </div>
@@ -197,7 +216,6 @@ Known for its **Ransomware-as-a-Service (RaaS)** model, LockBit has attacked CDW
         </div>
       </HomeSection>
 
-      {/* Modal */}
       {actorDetails && (
         <Modal
           title={actorDetails.title}

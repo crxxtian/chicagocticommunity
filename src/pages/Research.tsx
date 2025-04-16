@@ -9,6 +9,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { HomeSection } from "@/components/HomeSection";
 import Modal from "@/components/Modal";
 import ReactMarkdown from "react-markdown";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 type Victim = {
   victim: string;
@@ -35,6 +46,11 @@ type CertTeam = {
   url: string;
 };
 
+type SectorStat = {
+  sector: string;
+  count: number;
+};
+
 export default function Research() {
   const [victims, setVictims] = useState<Victim[]>([]);
   const [sectorFilter, setSectorFilter] = useState<string | null>(null);
@@ -42,6 +58,7 @@ export default function Research() {
   const [actorDetails, setActorDetails] = useState<ThreatActor | null>(null);
   const [papers, setPapers] = useState<ArxivPaper[]>([]);
   const [certs, setCerts] = useState<CertTeam[]>([]);
+  const [sectorStats, setSectorStats] = useState<SectorStat[]>([]);
 
   const modalContent: Record<string, ThreatActor> = {
     RansomHouse: {
@@ -94,7 +111,7 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
       })
       .catch((err) => console.error("CERT fetch failed", err));
 
-    fetch("/api/arxiv?query=cybersecurity")
+    fetch("/api/arxiv")
       .then((res) => res.json())
       .then((data) => {
         const valid = Array.isArray(data)
@@ -103,10 +120,31 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         setPapers(valid.slice(0, 8));
       })
       .catch((err) => console.error("arXiv fetch failed", err));
+
+    fetch("https://api.ransomware.live/v2/sectors")
+      .then((res) => res.json())
+      .then((data) => {
+        const sorted = Object.entries(data)
+          .map(([sector, count]) => ({ sector, count: Number(count) }))
+          .sort((a, b) => b.count - a.count);
+        setSectorStats(sorted.slice(0, 10));
+      })
+      .catch((err) => console.error("Sector stats fetch failed", err));
   }, []);
 
   const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
   const filteredVictims = sectorFilter ? victims.filter((v) => v.activity === sectorFilter) : victims;
+
+  const sectorChartData = {
+    labels: sectorStats.map((s) => s.sector),
+    datasets: [
+      {
+        label: "Victim Count",
+        data: sectorStats.map((s) => s.count),
+        backgroundColor: "rgba(255, 99, 132, 0.5)",
+      },
+    ],
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
@@ -117,7 +155,6 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         </p>
       </motion.div>
 
-      {/* Threat Actor Spotlight */}
       <HomeSection title="Threat Actor Spotlights">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.keys(modalContent).map((actor) => (
@@ -142,7 +179,6 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         </div>
       </HomeSection>
 
-      {/* Research Papers */}
       {papers.length > 0 && (
         <HomeSection title="Cybersecurity Research Papers">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -164,7 +200,6 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         </HomeSection>
       )}
 
-      {/* Ransomware */}
       {victims.length > 0 && (
         <HomeSection title="Recent Ransomware Activity">
           <div className="mb-4 flex items-center justify-between">
@@ -212,28 +247,12 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         </HomeSection>
       )}
 
-      {/* CERTs */}
-      {certs.length > 0 && (
-        <HomeSection title="CERT/CSIRT Directory">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {certs.map((team, i) => (
-              <div key={i} className="border border-border p-4 rounded-md bg-secondary/50">
-                <h3 className="font-mono font-medium text-base mb-1">{team.name}</h3>
-                <a
-                  href={team.url}
-                  className="text-sm text-blue-500 underline break-words"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {team.url}
-                </a>
-              </div>
-            ))}
-          </div>
+      {sectorStats.length > 0 && (
+        <HomeSection title="Top Targeted Sectors">
+          <Bar data={sectorChartData} />
         </HomeSection>
       )}
 
-      {/* Modal */}
       {actorDetails && (
         <Modal
           title={actorDetails.title}

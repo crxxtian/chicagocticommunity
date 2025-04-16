@@ -107,7 +107,47 @@ const resources = [
     type: "link",
     link: "https://chicybercon.com/",
     category: "Events"
-  }
+  },
+    {
+      id: 11,
+      title: "CISA Emergency Response - Cyber Incident Reporting",
+      description: "Official channel for reporting cyber incidents and reaching federal CERT teams. For immediate assistance, contact CISA Central.",
+      type: "link",
+      link: "https://www.cisa.gov/report",
+      category: "Incident Response"
+    },
+    {
+      id: 12,
+      title: "MS-ISAC (Multi-State Information Sharing & Analysis Center)",
+      description: "Free cybersecurity resources and 24/7 incident response services for U.S. state, local, tribal, and territorial governments.",
+      type: "link",
+      link: "https://www.cisecurity.org/ms-isac",
+      category: "Incident Response"
+    },
+    {
+      id: 13,
+      title: "NJCCIC - New Jersey Cybersecurity & Communications Integration Cell",
+      description: "The NJCCIC provides real-time threat intelligence sharing and incident response support for New Jersey entities.",
+      type: "link",
+      link: "https://www.cyber.nj.gov/",
+      category: "Incident Response"
+    },
+    {
+      id: 14,
+      title: "MA State Police - Digital Services / Cyber Incident Response",
+      description: "Massachusetts Digital Services supports critical infrastructure cybersecurity and cybercrime investigation statewide.",
+      type: "link",
+      link: "https://www.mass.gov/orgs/digital-services",
+      category: "Incident Response"
+    },
+    {
+      id: 15,
+      title: "CERT Division - Carnegie Mellon University (SEI)",
+      description: "The CERT Division at the SEI leads national R&D in cybersecurity, trusted by federal agencies and critical infrastructure partners.",
+      type: "link",
+      link: "https://www.sei.cmu.edu/about/divisions/cert/index.cfm",
+      category: "Research"
+    }    
 ];
 
 

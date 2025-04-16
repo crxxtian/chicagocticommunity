@@ -3,35 +3,38 @@ export const config = {
   };
   
   export default async function handler(req: Request): Promise<Response> {
-    const { searchParams } = new URL(req.url);
-    const query = searchParams.get("query") || "cybersecurity";
+    const searchTerms = ["cybersecurity", "APT", "cybercrime", "malware", "ransomware"];
+    const maxPerQuery = 5;
   
-    const arxivUrl = `http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
-      query
-    )}&start=0&max_results=10`;
+    const fetchEntries = async (term: string) => {
+      const query = encodeURIComponent(term);
+      const url = `https://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=${maxPerQuery}`;
+      
+      const res = await fetch(url);
+      const xml = await res.text();
   
-    try {
-      const response = await fetch(arxivUrl);
-      const xml = await response.text();
-  
-      // Parse the Atom XML into a simple object
-      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map((match) => {
+      return Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map((match) => {
         const entry = match[1];
   
         const getTag = (tag: string) =>
-          entry.match(new RegExp(`<${tag}>(.*?)</${tag}>`))?.[1] || "No data";
+          entry.match(new RegExp(`<${tag}>(.*?)</${tag}>`))?.[1].replace(/\n/g, " ").trim() || null;
   
-        const getLink = () =>
-          entry.match(/<link[^>]+href="(http[^"]+)"[^>]*rel="alternate"/)?.[1] || "";
+        const link =
+          entry.match(/<link[^>]+href="(http[^"]+)"[^>]*rel="alternate"/)?.[1] || null;
   
         return {
-          title: getTag("title").replace(/\n/g, " ").trim(),
-          summary: getTag("summary").replace(/\n/g, " ").trim(),
-          link: getLink(),
+          title: getTag("title"),
+          summary: getTag("summary"),
+          link,
         };
-      });
+      }).filter((entry) => entry.title && entry.summary && entry.link);
+    };
   
-      return new Response(JSON.stringify(entries), {
+    try {
+      const allResults = await Promise.all(searchTerms.map(fetchEntries));
+      const flat = allResults.flat().slice(0, 12); // limit total results
+  
+      return new Response(JSON.stringify(flat), {
         status: 200,
         headers: {
           "Content-Type": "application/json",
@@ -39,7 +42,7 @@ export const config = {
         },
       });
     } catch (error: any) {
-      console.error("Arxiv API Error:", error);
+      console.error("arXiv fetch failed", error);
       return new Response(JSON.stringify({ error: "Failed to fetch arXiv data" }), {
         status: 500,
         headers: {

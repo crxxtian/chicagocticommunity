@@ -22,7 +22,6 @@ The Chicago Cyber Threat Intelligence Community (CCTIC) is a web platform dedica
 - **Data Fetching**: Tanstack Query, RSS Parser, arXiv API, Ransomware Live API
 - **Build Tools**: Vite, ESLint, PostCSS
 - **Deployment**: Configured for Vercel
-- **Fonts**: IBM Plex Mono (monospace), Inter (sans-serif)
 
 ## Project Structure
 

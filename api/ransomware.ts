@@ -15,10 +15,10 @@ export default async function handler(req: Request): Promise<Response> {
   const endpoint = getEndpoint(type, { country, group, sector, year });
 
   try {
-    // If asking for sectors + victims, fetch both in parallel
+    // Updated: Better combined fetch logic
     if (type === "combined") {
       const [victimsRes, sectorsRes] = await Promise.all([
-        fetch(`${BASE_URL}/countryvictims/${country}`, {
+        fetch(`${BASE_URL}/recentvictims`, {
           headers: { Accept: "application/json" },
         }),
         fetch(`${BASE_URL}/sectors`, {
@@ -36,7 +36,6 @@ export default async function handler(req: Request): Promise<Response> {
       return successResponse({ victims, sectors });
     }
 
-    // Otherwise, just one endpoint
     const res = await fetch(endpoint, {
       headers: { Accept: "application/json" },
     });
@@ -61,7 +60,7 @@ function getEndpoint(
 ): string {
   switch (type) {
     case "recentvictims":
-      return `${BASE_URL}/countryvictims/${opts.country}`;
+      return `${BASE_URL}/recentvictims`;
     case "cyberattacks":
       return `${BASE_URL}/recentcyberattacks`;
     case "certs":

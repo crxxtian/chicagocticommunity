@@ -78,11 +78,16 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
     fetch("/api/ransomware?type=combined&country=US")
       .then((res) => res.json())
       .then((data) => {
-        setVictims(Array.isArray(data.victims) ? data.victims.slice(0, 30) : []);
-        const sectors = Object.entries(data.sectors || {})
+        const victimsData = Array.isArray(data.victims)
+          ? data.victims.filter((v: Victim) => v.activity && v.activity !== "Not Found")
+          : [];
+        setVictims(victimsData.slice(0, 30));
+
+        const sectorList = Object.entries(data.sectors || {})
           .map(([sector, count]) => ({ sector, count: Number(count) }))
+          .filter((s) => s.sector && s.sector !== "Not Found" && s.count > 0)
           .sort((a, b) => b.count - a.count);
-        setSectorStats(sectors.slice(0, 10));
+        setSectorStats(sectorList.slice(0, 12));
       })
       .catch((err) => console.error("Combined fetch failed", err));
 
@@ -98,7 +103,9 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
   }, []);
 
   const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
-  const filteredVictims = sectorFilter ? victims.filter((v) => v.activity === sectorFilter) : victims;
+  const filteredVictims = sectorFilter
+    ? victims.filter((v) => v.activity === sectorFilter)
+    : victims;
 
   const sectorChartData = {
     labels: sectorStats.map((s) => s.sector),
@@ -106,8 +113,8 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
       {
         label: "Victim Count",
         data: sectorStats.map((s) => s.count),
-        backgroundColor: "rgba(255, 99, 132, 0.6)",
-        borderRadius: 4,
+        backgroundColor: "#e11d48",
+        borderRadius: 6,
       },
     ],
   };
@@ -123,8 +130,27 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
       },
     },
     scales: {
-      x: { ticks: { font: { family: "monospace" } } },
-      y: { beginAtZero: true },
+      x: {
+        ticks: {
+          font: { family: "monospace" },
+          color: "#d1d5db",
+          maxRotation: 35,
+          minRotation: 15,
+        },
+        grid: {
+          color: "rgba(255,255,255,0.05)",
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: "#d1d5db",
+          stepSize: 250,
+        },
+        grid: {
+          color: "rgba(255,255,255,0.05)",
+        },
+      },
     },
   };
 

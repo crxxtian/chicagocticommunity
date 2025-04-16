@@ -3,11 +3,24 @@ export const config = {
   };
   
   export default async function handler(req: Request): Promise<Response> {
+    // CORS preflight handling
+    if (req.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      });
+    }
+  
     const query = encodeURIComponent("cybersecurity");
     const url = `https://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending`;
   
     try {
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
       const xml = await res.text();
   
       const decode = (text: string) =>

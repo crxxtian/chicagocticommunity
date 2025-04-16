@@ -4,58 +4,45 @@ export const config = {
   
   export default async function handler(req: Request): Promise<Response> {
     const searchTerms = [
-      "cybersecurity",
-      "APT",
-      "cybercrime",
-      "malware",
-      "ransomware",
+      'cybersecurity',
+      'APT',
+      'cybercrime',
+      'malware',
+      'ransomware',
     ];
-    const maxPerQuery = 4;
+    const maxResults = 12;
   
-    const fetchEntries = async (term: string) => {
-      const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
-        term
-      )}&start=0&max_results=${maxPerQuery}&sortBy=submittedDate&sortOrder=descending`;
-  
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": "CyberIntelResearchBot/1.0 (+https://www.cctic.xyz/)",
-          Accept: "application/atom+xml",
-        },
-      });
-  
-      const xml = await res.text();
-  
-      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map(
-        (match) => {
-          const entry = match[1];
-  
-          const getTag = (tag: string) =>
-            entry.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1]
-              ?.replace(/\s+/g, " ")
-              .trim() || null;
-  
-          const linkMatch = entry.match(
-            /<link[^>]+href="(http[^"]+)"[^>]*rel="alternate"/
-          );
-          const link = linkMatch?.[1] || null;
-  
-          return {
-            title: getTag("title"),
-            summary: getTag("summary"),
-            link,
-          };
-        }
-      );
-  
-      return entries.filter((e) => e.title && e.summary && e.link);
-    };
+    // Combine search terms using OR operator
+    const combinedQuery = searchTerms.map(term => `all:${term}`).join('+OR+');
+    const encodedQuery = encodeURIComponent(combinedQuery);
+    const url = `https://export.arxiv.org/api/query?search_query=${encodedQuery}&start=0&max_results=${maxResults}&sortBy=submittedDate&sortOrder=descending`;
   
     try {
-      const allResults = await Promise.all(searchTerms.map(fetchEntries));
-      const flat = allResults.flat().slice(0, 12);
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`arXiv API responded with status ${res.status}`);
+      }
+      const xml = await res.text();
+      const parser = new DOMParser();
+      const feed = parser.parseFromString(xml, "application/xml");
   
-      return new Response(JSON.stringify(flat), {
+      const entries = Array.from(feed.getElementsByTagName("entry")).map((entry) => {
+        const getText = (tag: string) =>
+          entry.getElementsByTagName(tag)?.[0]?.textContent?.trim() ?? null;
+  
+        const linkNode = Array.from(entry.getElementsByTagName("link")).find(
+          (el) => el.getAttribute("rel") === "alternate"
+        );
+        const link = linkNode?.getAttribute("href") ?? null;
+  
+        return {
+          title: getText("title"),
+          summary: getText("summary"),
+          link,
+        };
+      }).filter((entry) => entry.title && entry.summary && entry.link);
+  
+      return new Response(JSON.stringify(entries), {
         status: 200,
         headers: {
           "Content-Type": "application/json",

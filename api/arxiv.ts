@@ -3,7 +3,13 @@ export const config = {
   };
   
   export default async function handler(req: Request): Promise<Response> {
-    const searchTerms = ["cybersecurity", "APT", "cybercrime", "malware", "ransomware"];
+    const searchTerms = [
+      "cybersecurity",
+      "APT",
+      "cybercrime",
+      "malware",
+      "ransomware",
+    ];
     const maxPerQuery = 4;
   
     const fetchEntries = async (term: string) => {
@@ -11,25 +17,36 @@ export const config = {
         term
       )}&start=0&max_results=${maxPerQuery}&sortBy=submittedDate&sortOrder=descending`;
   
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "CyberIntelResearchBot/1.0 (+https://www.cctic.xyz/)",
+          Accept: "application/atom+xml",
+        },
+      });
+  
       const xml = await res.text();
   
-      // Very lightweight manual parser using regex
-      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map((match) => {
-        const entry = match[1];
+      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map(
+        (match) => {
+          const entry = match[1];
   
-        const getTag = (tag: string) =>
-          entry.match(new RegExp(`<${tag}>([\\s\\S]*?)<\/${tag}>`))?.[1]?.trim().replace(/\n/g, " ") ?? null;
+          const getTag = (tag: string) =>
+            entry.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1]
+              ?.replace(/\s+/g, " ")
+              .trim() || null;
   
-        const linkMatch = entry.match(/<link.*?rel="alternate".*?href="(.*?)"/);
-        const link = linkMatch?.[1] ?? null;
+          const linkMatch = entry.match(
+            /<link[^>]+href="(http[^"]+)"[^>]*rel="alternate"/
+          );
+          const link = linkMatch?.[1] || null;
   
-        return {
-          title: getTag("title"),
-          summary: getTag("summary"),
-          link,
-        };
-      });
+          return {
+            title: getTag("title"),
+            summary: getTag("summary"),
+            link,
+          };
+        }
+      );
   
       return entries.filter((e) => e.title && e.summary && e.link);
     };

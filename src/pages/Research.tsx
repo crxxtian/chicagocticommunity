@@ -247,7 +247,7 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
         <HomeSection title="Top Targeted Sectors">
           <div className="bg-muted/10 p-6 rounded-lg border flex justify-center items-center">
             <div className="w-full max-w-md sm:max-w-lg">
-              <Doughnut data={doughnutChartData} options={doughnutOptions} />
+              <Doughnut data={doughnutChartData} options={{...doughnutOptions, plugins: { legend: { ...doughnutOptions?.plugins?.legend, position: 'bottom' }}}} />
             </div>
           </div>
         </HomeSection>

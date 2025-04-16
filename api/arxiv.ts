@@ -3,37 +3,31 @@ export const config = {
   };
   
   export default async function handler(req: Request): Promise<Response> {
-    const keywords = ["cybersecurity", "APT", "cybercrime", "malware", "ransomware"];
-    const booleanQuery = keywords.map((kw) => `all:${kw}`).join("+OR+");
-  
-    const url = `https://export.arxiv.org/api/query?search_query=${booleanQuery}&start=0&max_results=12&sortBy=submittedDate&sortOrder=descending`;
+    const query = encodeURIComponent("(cybersecurity OR APT OR cybercrime OR malware OR ransomware)");
+    const url = `https://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=12&sortBy=submittedDate&sortOrder=descending`;
   
     try {
-      const res = await fetch(url, {
-        headers: { Accept: "application/atom+xml" },
-      });
-  
+      const res = await fetch(url);
       const xml = await res.text();
   
-      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map(
-        (match) => {
-          const entry = match[1];
+      const entries = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)).map((match) => {
+        const entry = match[1];
   
-          const getTag = (tag: string) =>
-            entry.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1]?.trim() ?? null;
+        const extract = (tag: string) => {
+          const m = entry.match(new RegExp(`<${tag}>(.*?)</${tag}>`, "s"));
+          return m?.[1]?.replace(/\n/g, " ").trim() ?? null;
+        };
   
-          const link =
-            entry.match(/<link[^>]*rel="alternate"[^>]*href="(.*?)"/)?.[1] ?? null;
+        const link = entry.match(/<link[^>]+rel="alternate"[^>]+href="([^"]+)"/)?.[1] ?? null;
   
-          return {
-            title: getTag("title"),
-            summary: getTag("summary"),
-            link,
-          };
-        }
-      );
+        return {
+          title: extract("title"),
+          summary: extract("summary"),
+          link,
+        };
+      });
   
-      const filtered = entries.filter((e) => e.title && e.summary && e.link);
+      const filtered = entries.filter((e) => e.title && e.summary && e.link).slice(0, 8);
   
       return new Response(JSON.stringify(filtered), {
         status: 200,
@@ -43,7 +37,7 @@ export const config = {
         },
       });
     } catch (err: any) {
-      console.error("arXiv fetch failed:", err);
+      console.error("arXiv fetch failed", err);
       return new Response(JSON.stringify({ error: "Failed to fetch arXiv data" }), {
         status: 500,
         headers: {

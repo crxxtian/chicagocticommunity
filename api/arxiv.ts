@@ -3,8 +3,8 @@ export const config = {
   };
   
   export default async function handler(req: Request): Promise<Response> {
-    const query = encodeURIComponent("(cybersecurity OR APT OR cybercrime OR malware OR ransomware)");
-    const url = `https://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=12&sortBy=submittedDate&sortOrder=descending`;
+    const query = encodeURIComponent("cybersecurity");
+    const url = `https://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending`;
   
     try {
       const res = await fetch(url);

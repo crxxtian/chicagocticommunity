@@ -15,7 +15,6 @@ export default async function handler(req: Request): Promise<Response> {
   const endpoint = getEndpoint(type, { country, group, sector, year });
 
   try {
-    // Updated: Better combined fetch logic
     if (type === "combined") {
       const [victimsRes, sectorsRes] = await Promise.all([
         fetch(`${BASE_URL}/recentvictims`, {
@@ -30,8 +29,13 @@ export default async function handler(req: Request): Promise<Response> {
         return errorResponse("Failed to fetch victims or sector data", 500);
       }
 
-      const victims = await victimsRes.json();
+      let victims = await victimsRes.json();
       const sectors = await sectorsRes.json();
+
+      // Local filtering: Keep only U.S. or undefined country entries
+      victims = Array.isArray(victims)
+        ? victims.filter((v) => !v.country || v.country.toUpperCase() === "US")
+        : [];
 
       return successResponse({ victims, sectors });
     }

@@ -1,8 +1,10 @@
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
 
-type VictimCardProps = {
+export type VictimCardProps = {
   victim: string;
   group: string;
   attackdate: string;
@@ -19,32 +21,50 @@ export default function VictimCard({
   country,
   claim_url,
 }: VictimCardProps) {
+  // Clean and format date
+  let formattedDate: string;
+  try {
+    formattedDate = format(parseISO(attackdate), "PPpp");
+  } catch {
+    formattedDate = attackdate;
+  }
+
+  // Clean URL for display
   const cleanedURL = claim_url?.replace(/^https?:\/\//, "") ?? "";
   const isOnion = cleanedURL.includes(".onion");
 
   return (
-    <div className="border border-border p-4 rounded-md bg-background/40 space-y-2">
+    <div className="border border-border p-4 rounded-xl bg-background/40 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start gap-4">
-        <h3 className="font-mono font-semibold text-base break-words leading-tight">
+        <h3 className="font-mono font-semibold text-lg leading-tight break-words">
           {victim || "Unknown Victim"}
         </h3>
-        <Badge variant="outline" className="shrink-0">{group}</Badge>
+        <Badge variant="outline">{group}</Badge>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        <strong>Sector:</strong> {activity || "Unknown"} •{" "}
-        <strong>Country:</strong> {country || "Unknown"} • {attackdate}
-      </p>
+      <div className="flex flex-wrap text-sm text-muted-foreground gap-x-4 gap-y-1 mt-1">
+        <span><strong>Sector:</strong> {activity || "Unknown"}</span>
+        <span><strong>Country:</strong> {country || "Unknown"}</span>
+        <span>{formattedDate}</span>
+      </div>
 
       {claim_url && (
-        <div className="text-xs text-muted-foreground italic break-all mt-1">
-          <Shield className="inline-block w-3.5 h-3.5 mr-1 text-red-500" />
-          Leak site listed for reference only:
-          <br />
-          <span className={cn(isOnion && "text-red-400")}>
-            {cleanedURL}
-            {isOnion && " (onion link)"}
-          </span>
+        <div className="mt-3 text-xs text-muted-foreground italic">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-red-500 shrink-0" />
+            <span>Leak site (reference only):</span>
+          </div>
+          <a
+            href={claim_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "break-all hover:text-blue-400 transition-colors",
+              isOnion && "text-red-400"
+            )}
+          >
+            {cleanedURL}{isOnion ? " (onion)" : ""}
+          </a>
         </div>
       )}
     </div>

@@ -53,23 +53,26 @@ type SectorStat = {
 };
 
 const tagKeywords: Record<string, string[]> = {
-  cybersecurity: ["cybersecurity", "cyber security", "cyber"],
-  ml: ["machine learning", "ml"],
-  ai: ["artificial intelligence", "ai"],
-  llm: ["large language model", "llm"],
-  privacy: ["privacy", "private", "confidentiality"],
-  iot: ["internet of things", "iot"],
-  ethics: ["ethics", "bias", "responsibility"],
-  blockchain: ["blockchain"],
-  malware: ["malware", "ransomware", "virus"],
-  phishing: ["phishing", "social engineering"],
-  vulnerability: ["vulnerability", "exploit", "cve"],
-  dataset: ["dataset", "corpus", "benchmark"],
+  ml: ["machine learning", "ml", "supervised", "unsupervised", "neural network"],
+  ai: ["artificial intelligence", "ai", "agent-based", "reasoning", "nlp"],
+  llm: ["large language model", "llm", "gpt", "transformer"],
+  privacy: ["privacy", "private", "confidentiality", "anonymization", "obfuscation"],
+  iot: ["internet of things", "iot", "embedded", "smart home"],
+  ethics: ["ethics", "bias", "responsibility", "fairness", "transparency"],
+  blockchain: ["blockchain", "distributed ledger", "crypto"],
+  malware: ["malware", "ransomware", "trojan", "worm", "spyware"],
+  phishing: ["phishing", "social engineering", "spoofing"],
+  vulnerability: ["vulnerability", "exploit", "cve", "buffer overflow", "zero-day"],
+  dataset: ["dataset", "corpus", "benchmark", "collection"],
+  quantum: ["quantum", "qubit", "quantum-safe", "post-quantum"],
+  supplychain: ["supply chain", "vendor risk", "third-party"],
+  biometrics: ["biometric", "fingerprint", "facial recognition"],
 };
 
 function extractTags(title: string, summary: string): string[] {
   const text = `${title} ${summary}`.toLowerCase();
   const tags = new Set<string>();
+
   for (const [tag, keywords] of Object.entries(tagKeywords)) {
     for (const keyword of keywords) {
       if (text.includes(keyword)) {
@@ -78,8 +81,10 @@ function extractTags(title: string, summary: string): string[] {
       }
     }
   }
+
   return Array.from(tags);
 }
+
 
 export default function Research() {
   const [victims, setVictims] = useState<Victim[]>([]);

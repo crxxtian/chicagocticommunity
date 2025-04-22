@@ -10,7 +10,6 @@ type RP_CardProps = {
 };
 
 const badgeColorMap: Record<string, string> = {
-  cybersecurity: "bg-blue-600 text-white",
   ml: "bg-purple-500 text-white",
   ai: "bg-pink-500 text-white",
   llm: "bg-indigo-500 text-white",
@@ -22,11 +21,18 @@ const badgeColorMap: Record<string, string> = {
   phishing: "bg-orange-600 text-white",
   vulnerability: "bg-fuchsia-600 text-white",
   dataset: "bg-lime-500 text-black",
+  quantum: "bg-cyan-600 text-white",
+  supplychain: "bg-amber-600 text-white",
+  biometrics: "bg-blue-700 text-white",
 };
 
 export default function RP_Card({ title, summary, link, tags = [] }: RP_CardProps) {
   const visibleTags = Array.from(
-    new Map(tags.map((tag) => [tag.toLowerCase(), tag])).values()
+    new Map(
+      tags
+        .filter((tag) => tag.toLowerCase() !== "cybersecurity") // Remove generic tag
+        .map((tag) => [tag.toLowerCase(), tag])
+    ).values()
   );
 
   return (
@@ -36,12 +42,12 @@ export default function RP_Card({ title, summary, link, tags = [] }: RP_CardProp
       whileHover={{ scale: 1.015 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
       viewport={{ once: true }}
-      className="h-full min-h-[240px] flex flex-col justify-between border border-border rounded-md p-4 bg-secondary/50"
+      className="h-full min-h-[260px] flex flex-col justify-between border border-border rounded-md p-4 bg-secondary/50"
     >
       <div className="space-y-2 flex-1">
         {/* Title */}
-        <h3 className="font-sans font-semibold text-base md:text-lg leading-snug break-words">
-          {title.length > 220 ? title.slice(0, 215).trim() + "…" : title}
+        <h3 className="font-sans font-semibold text-base md:text-[1.05rem] leading-snug break-words">
+          {title}
         </h3>
 
         {/* Summary */}
@@ -56,7 +62,7 @@ export default function RP_Card({ title, summary, link, tags = [] }: RP_CardProp
               <span
                 key={tag}
                 className={cn(
-                  "text-xs px-2 py-0.5 rounded-full border bg-accent text-accent-foreground",
+                  "text-xs px-2 py-0.5 rounded-full border",
                   badgeColorMap[tag] ?? "bg-muted text-muted-foreground"
                 )}
               >

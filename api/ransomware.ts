@@ -6,73 +6,102 @@ const BASE_URL = "https://api.ransomware.live/v2";
 
 export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const type = url.searchParams.get("type") || "countryvictims";
+  const type = url.searchParams.get("type") || "recentvictims";
   const country = url.searchParams.get("country") || "US";
+  const group = url.searchParams.get("group");
+  const sector = url.searchParams.get("sector");
+  const year = url.searchParams.get("year");
 
-  // CORS headers
-  const defaultHeaders = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-  };
+  const endpoint = getEndpoint(type, { country, group, sector, year });
 
   try {
-    switch (type) {
-      case "recentvictims": {
-        const res = await fetch(
-          `${BASE_URL}/recentvictims`,
-          { headers: { Accept: "application/json" } }
-        );
-        if (!res.ok) {
-          throw new Error(`Failed to fetch recent victims: ${res.status}`);
-        }
-        const victims = await res.json();
-        return new Response(JSON.stringify(victims), {
-          status: 200,
-          headers: defaultHeaders,
-        });
+    if (type === "combined") {
+      const [victimsRes, sectorsRes] = await Promise.all([
+        fetch(`${BASE_URL}/recentvictims`, {
+          headers: { Accept: "application/json" },
+        }),
+        fetch(`${BASE_URL}/sectors`, {
+          headers: { Accept: "application/json" },
+        }),
+      ]);
+
+      if (!victimsRes.ok || !sectorsRes.ok) {
+        return errorResponse("Failed to fetch victims or sector data", 500);
       }
 
-      case "combined":
-      case "countryvictims": {
-        const res = await fetch(
-          `${BASE_URL}/countryvictims/${encodeURIComponent(country)}`,
-          { headers: { Accept: "application/json" } }
-        );
-        if (!res.ok) {
-          throw new Error(
-            `Failed to fetch country victims (${country}): ${res.status}`
-          );
-        }
-        const victims: any[] = await res.json();
+      let victims = await victimsRes.json();
+      const sectors = await sectorsRes.json();
 
-        // Aggregate sector counts
-        const sectorsMap: Record<string, number> = {};
-        for (const v of victims) {
-          const sector = v.activity || "Unknown";
-          sectorsMap[sector] = (sectorsMap[sector] || 0) + 1;
-        }
-        const sectors = Object.entries(sectorsMap)
-          .map(([sector, count]) => ({ sector, count }))
-          .sort((a, b) => b.count - a.count);
+      // Local filtering: Keep only U.S. or undefined country entries
+      victims = Array.isArray(victims)
+        ? victims.filter((v) => !v.country || v.country.toUpperCase() === "US")
+        : [];
 
-        return new Response(
-          JSON.stringify({ victims, sectors }),
-          { status: 200, headers: defaultHeaders }
-        );
-      }
-
-      default: {
-        return new Response(
-          JSON.stringify({ error: `Invalid type: ${type}` }),
-          { status: 400, headers: defaultHeaders }
-        );
-      }
+      return successResponse({ victims, sectors });
     }
+
+    const res = await fetch(endpoint, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!res.ok) {
+      return errorResponse("Failed to fetch ransomware data", res.status);
+    }
+
+    const raw = await res.json();
+    const data = Array.isArray(raw) ? raw : raw?.victims || raw?.data || raw;
+
+    return successResponse(data);
   } catch (err: any) {
     console.error("Ransomware API error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: defaultHeaders,
-    });
+    return errorResponse(err.message || "Internal Server Error", 500);
   }
+}
+
+function getEndpoint(
+  type: string,
+  opts: { country: string; group?: string; sector?: string; year?: string }
+): string {
+  switch (type) {
+    case "recentvictims":
+      return `${BASE_URL}/recentvictims`;
+    case "cyberattacks":
+      return `${BASE_URL}/recentcyberattacks`;
+    case "certs":
+      return `${BASE_URL}/certs/${opts.country}`;
+    case "groups":
+      return `${BASE_URL}/groups`;
+    case "groupvictims":
+      return `${BASE_URL}/groupvictims/${encodeURIComponent(opts.group || "")}`;
+    case "sectorvictims":
+      return opts.country
+        ? `${BASE_URL}/sectorvictims/${encodeURIComponent(opts.sector || "")}/${opts.country}`
+        : `${BASE_URL}/sectorvictims/${encodeURIComponent(opts.sector || "")}`;
+    case "history":
+      return opts.year
+        ? `${BASE_URL}/victims/${opts.year}`
+        : `${BASE_URL}/victims/2024`;
+    default:
+      return `${BASE_URL}/recentvictims`;
+  }
+}
+
+function successResponse(data: any): Response {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
+function errorResponse(message: string, status = 500): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
 }

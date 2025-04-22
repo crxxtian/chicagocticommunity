@@ -26,18 +26,25 @@ export default async function handler(req: Request): Promise<Response> {
 
     const parser = new XMLParser({
       ignoreAttributes: false,
+      removeNSPrefix: true, 
     });
+
     const parsed = parser.parse(xml);
+    const entries = parsed?.feed?.entry ?? [];
 
-    const entries = parsed.feed.entry || [];
+    const data = Array.isArray(entries)
+      ? entries.map((entry: any) => {
+          const link = Array.isArray(entry.link)
+            ? entry.link.find((l: any) => l["@_rel"] === "alternate")?.["@_href"]
+            : entry.link?.["@_href"] || null;
 
-    const data = Array.isArray(entries) ? entries.map((entry) => ({
-      title: entry.title,
-      summary: entry.summary,
-      link: Array.isArray(entry.link)
-        ? entry.link.find((l) => l["@_rel"] === "alternate")?.["@_href"]
-        : entry.link?.["@_href"] ?? null,
-    })) : [];
+          return {
+            title: entry.title ?? "No title",
+            summary: entry.summary ?? "No summary",
+            link,
+          };
+        })
+      : [];
 
     const filtered = data.filter((e) => e.title && e.summary && e.link);
 

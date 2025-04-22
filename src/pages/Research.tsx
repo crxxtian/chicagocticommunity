@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Filter, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,9 +25,13 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
-
 ChartJS.register(ArcElement, Tooltip, Legend);
+
+// Dynamically load to reduce bundle size
+const Doughnut = dynamic(
+  () => import("react-chartjs-2").then((mod) => mod.Doughnut),
+  { ssr: false }
+);
 
 type Victim = {
   victim: string;
@@ -32,7 +39,12 @@ type Victim = {
   attackdate: string;
   country: string;
   activity: string;
-  claim_url: string;
+  claim_url?: string;
+};
+
+type SectorStat = {
+  sector: string;
+  count: number;
 };
 
 type ThreatActor = {
@@ -47,222 +59,211 @@ type ArxivPaper = {
   tags?: string[];
 };
 
-type SectorStat = {
-  sector: string;
-  count: number;
+type ApiState<T> = {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
 };
 
-const tagKeywords: Record<string, string[]> = {
-  ml: ["machine learning", "ml", "supervised", "unsupervised", "neural network"],
-  ai: ["artificial intelligence", "ai", "agent-based", "reasoning", "nlp"],
-  llm: ["large language model", "llm", "gpt", "transformer"],
-  privacy: ["privacy", "private", "confidentiality", "anonymization", "obfuscation"],
-  iot: ["internet of things", "iot", "embedded", "smart home"],
-  ethics: ["ethics", "bias", "responsibility", "fairness", "transparency"],
-  blockchain: ["blockchain", "distributed ledger", "crypto"],
-  malware: ["malware", "ransomware", "trojan", "worm", "spyware"],
-  phishing: ["phishing", "social engineering", "spoofing"],
-  vulnerability: ["vulnerability", "exploit", "cve", "buffer overflow", "zero-day"],
-  dataset: ["dataset", "corpus", "benchmark", "collection"],
-  quantum: ["quantum", "qubit", "quantum-safe", "post-quantum"],
-  supplychain: ["supply chain", "vendor risk", "third-party"],
-  biometrics: ["biometric", "fingerprint", "facial recognition"],
-};
+function useFetch<T>(url: string): ApiState<T> {
+  const [state, setState] = useState<ApiState<T>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
 
-function extractTags(title: string, summary: string): string[] {
-  const text = `${title} ${summary}`.toLowerCase();
-  const tags = new Set<string>();
+  useEffect(() => {
+    let canceled = false;
+    setState({ data: null, loading: true, error: null });
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json() as Promise<T>;
+      })
+      .then((data) => {
+        if (!canceled) setState({ data, loading: false, error: null });
+      })
+      .catch((e) => {
+        if (!canceled) setState({ data: null, loading: false, error: e.message });
+      });
+    return () => { canceled = true; };
+  }, [url]);
 
-  for (const [tag, keywords] of Object.entries(tagKeywords)) {
-    for (const keyword of keywords) {
-      if (text.includes(keyword)) {
-        tags.add(tag);
-        break;
-      }
-    }
-  }
-
-  return Array.from(tags);
+  return state;
 }
 
-
 export default function Research() {
-  const [victims, setVictims] = useState<Victim[]>([]);
-  const [sectorStats, setSectorStats] = useState<SectorStat[]>([]);
-  const [sectorFilter, setSectorFilter] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [actorDetails, setActorDetails] = useState<ThreatActor | null>(null);
-  const [papers, setPapers] = useState<ArxivPaper[]>([]);
+  const { toast } = useToast();
 
-  const modalContent: Record<string, ThreatActor> = {
+  // Fetch victims + sectors
+  const {
+    data: combinedData,
+    loading: loadingVictims,
+    error: victimsError,
+  } = useFetch<{ victims: Victim[]; sectors: Record<string, number> }>(
+    "/api/ransomware?type=combined&country=US"
+  );
+
+  // Fetch arXiv papers
+  const {
+    data: papers,
+    loading: loadingPapers,
+    error: papersError,
+  } = useFetch<ArxivPaper[]>("/api/arxiv");
+
+  // Show errors
+  useEffect(() => {
+    if (victimsError)
+      toast({ variant: "destructive", title: "Error loading victims", description: victimsError });
+    if (papersError)
+      toast({ variant: "destructive", title: "Error loading papers", description: papersError });
+  }, [victimsError, papersError, toast]);
+
+  // Derive victims and sectors
+  const victims = useMemo(() => combinedData?.victims || [], [combinedData]);
+  const sectorStats = useMemo(() => {
+    if (!combinedData) return [];
+    return Object.entries(combinedData.sectors)
+      .map(([sector, count]) => ({ sector, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+  }, [combinedData]);
+
+  const [sectorFilter, setSectorFilter] = useState<string | null>(null);
+  const [modalContent, setModalContent] = useState<ThreatActor | null>(null);
+
+  const uniqueSectors = useMemo(
+    () => Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean),
+    [victims]
+  );
+
+  const filteredVictims = useMemo(
+    () => (sectorFilter ? victims.filter((v) => v.activity === sectorFilter) : victims),
+    [victims, sectorFilter]
+  );
+
+  const doughnutData = useMemo(
+    () => ({
+      labels: sectorStats.map((s) => s.sector),
+      datasets: [{ data: sectorStats.map((s) => s.count), borderWidth: 0 }],
+    }),
+    [sectorStats]
+  );
+
+  // Static actor details
+  const actorDetailsMap: Record<string, ThreatActor> = {
     RansomHouse: {
       title: "RansomHouse",
-      content: `**RansomHouse** is an extortion group known for stealing sensitive data without necessarily encrypting systems.\n\nIn March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.`,
+      content: `**RansomHouse** is an extortion group known for stealing sensitive data without necessarily encrypting systems.
+
+In March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.`,
     },
     LockBit: {
       title: "LockBit",
-      content: `**LockBit** is one of the most active RaaS (Ransomware-as-a-Service) operations globally.\n\nIt has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.`,
-    },
-  };
+      content: `**LockBit** is one of the most active RaaS (Ransomware-as-a-Service) operations globally.
 
-  useEffect(() => {
-    fetch("/api/ransomware?type=combined&country=US")
-      .then((res) => res.json())
-      .then((data) => {
-        const victimsData = Array.isArray(data.victims)
-          ? data.victims.filter((v: Victim) => v.activity && v.activity !== "Not Found")
-          : [];
-        setVictims(victimsData.slice(0, 30));
-
-        const sectorList = Object.entries(data.sectors || {})
-          .map(([sector, count]) => ({ sector, count: Number(count) }))
-          .filter((s) => s.sector && s.sector !== "Not Found" && s.count > 0)
-          .sort((a, b) => b.count - a.count);
-        setSectorStats(sectorList.slice(0, 12));
-      })
-      .catch((err) => console.error("Combined fetch failed", err));
-
-    fetch("/api/arxiv")
-      .then((res) => res.json())
-      .then((data) => {
-        const valid = Array.isArray(data)
-          ? data
-              .filter((d) => d.title && d.summary && d.link)
-              .map((d) => ({ ...d, tags: extractTags(d.title, d.summary) }))
-          : [];
-        setPapers(valid.slice(0, 8));
-      })
-      .catch((err) => console.error("arXiv fetch failed", err));
-  }, []);
-
-  const uniqueSectors = Array.from(new Set(victims.map((v) => v.activity))).filter(Boolean);
-  const filteredVictims = sectorFilter
-    ? victims.filter((v) => v.activity === sectorFilter)
-    : victims;
-
-  const doughnutChartData = {
-    labels: sectorStats.map((s) => s.sector),
-    datasets: [
-      {
-        label: "Victim Count",
-        data: sectorStats.map((s) => s.count),
-        backgroundColor: [
-          "#f87171", "#fb923c", "#facc15", "#4ade80", "#60a5fa",
-          "#a78bfa", "#f472b6", "#38bdf8", "#34d399", "#c084fc",
-          "#fde68a", "#a3e635",
-        ],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const doughnutOptions: any = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          color: "#d1d5db",
-          font: { family: "monospace" },
-        },
-      },
-      tooltip: {
-        backgroundColor: "#1f2937",
-        titleColor: "#f3f4f6",
-        bodyColor: "#d1d5db",
-        callbacks: {
-          label: (ctx: any) => `${ctx.label}: ${ctx.raw} victims`,
-        },
-      },
+It has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.`,
     },
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+      {/* Header */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <h1 className="text-4xl font-mono font-bold mb-4">Cyber Threat Research</h1>
         <p className="text-muted-foreground max-w-2xl">
-          Investigating threat actors, ransomware campaigns, and ongoing breaches with a focus on Illinois, the Midwest, and North America.
+          Investigating threat actors, ransomware campaigns, and ongoing breaches across North America.
         </p>
       </motion.div>
 
+      {/* Threat Actor Spotlights */}
       <HomeSection title="Threat Actor Spotlights">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.keys(modalContent).map((actor) => (
+          {Object.values(actorDetailsMap).map((actor) => (
             <div
-              key={actor}
-              className="border border-border p-4 rounded-md bg-muted/20 cursor-pointer"
-              onClick={() => {
-                setActorDetails(modalContent[actor]);
-                setIsModalOpen(true);
-              }}
+              key={actor.title}
+              className="border border-border p-4 rounded-lg bg-muted/20 hover:bg-muted/30 transition cursor-pointer"
+              onClick={() => setModalContent(actor)}
             >
               <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-red-500" />
-                {modalContent[actor].title}
+                <ShieldAlert className="h-5 w-5 text-red-500" />
+                {actor.title}
               </h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                {modalContent[actor].content.split("\n")[0]}
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                {actor.content.replace(/\n/g, ' ').slice(0, 80)}...
               </p>
-              <Badge variant="secondary">{actor === "RansomHouse" ? "Healthcare" : "Manufacturing"}</Badge>
+              <Badge variant="secondary">{actor.title === 'RansomHouse' ? 'Healthcare' : 'Manufacturing'}</Badge>
             </div>
           ))}
         </div>
       </HomeSection>
 
-      {papers.length > 0 && (
-        <HomeSection title="Latest Research Papers">
+      {/* Latest Research Papers */}
+      <HomeSection title="Latest Security Research Papers">
+        {loadingPapers ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {papers.map((paper, i) => (
-              <RP_Card
-                key={i}
-                title={paper.title}
-                summary={paper.summary}
-                link={paper.link}
-                tags={paper.tags}
-              />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 rounded-lg" />
             ))}
           </div>
-        </HomeSection>
-      )}
-
-      {victims.length > 0 && (
-        <HomeSection title="Recent Ransomware Activity">
-          <div className="mb-4 flex items-center justify-between">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-9">
-                  <Filter className="h-4 w-4 mr-2" />
-                  {sectorFilter || "Filter Sector"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setSectorFilter(null)}>All Sectors</DropdownMenuItem>
-                {uniqueSectors.map((sector) => (
-                  <DropdownMenuItem key={sector} onClick={() => setSectorFilter(sector)}>
-                    {sector}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {papers?.slice(0, 8).map((paper, i) => (
+              <RP_Card key={i} {...paper} />
+            ))}
           </div>
+        )}
+      </HomeSection>
 
+      {/* Recent Ransomware Activity */}
+      <HomeSection title="Recent Local Ransomware Activity">
+        <div className="flex items-center justify-between mb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-9">
+                <Filter className="mr-2" />
+                {sectorFilter || 'Filter Sector'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => setSectorFilter(null)}>
+                All Sectors
+              </DropdownMenuItem>
+              {uniqueSectors.map((sec) => (
+                <DropdownMenuItem key={sec} onSelect={() => setSectorFilter(sec)}>
+                  {sec}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {loadingVictims ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 rounded-lg" />
+            ))}
+          </div>
+        ) : (
           <div className="space-y-4">
             {filteredVictims.map((v) => (
-              <div key={`${v.victim}-${v.attackdate}`} className="border border-border p-4 rounded-md bg-background/40">
+              <div
+                key={`${v.victim}-${v.attackdate}`}
+                className="border border-border p-4 rounded-lg bg-background/40"
+              >
                 <div className="flex justify-between items-center mb-1">
-                  <h3 className="font-mono font-medium text-lg break-words">{v.victim || "Unknown Victim"}</h3>
+                  <h3 className="font-mono font-medium text-lg break-words">{v.victim}</h3>
                   <Badge variant="outline">{v.group}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Sector: <strong>{v.activity || "Unknown"}</strong> • {v.attackdate}
+                  Sector: <strong>{v.activity || 'Unknown'}</strong> • {v.attackdate}
                 </p>
                 {v.claim_url && (
                   <a
                     href={v.claim_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-blue-500 underline pt-1 block"
+                    className="text-sm text-red-500 underline pt-1 block"
                   >
                     View breach record
                   </a>
@@ -270,25 +271,27 @@ export default function Research() {
               </div>
             ))}
           </div>
-        </HomeSection>
-      )}
+        )}
+      </HomeSection>
 
-      {sectorStats.length > 0 && (
-        <HomeSection title="Top Targeted Sectors">
-          <div className="bg-muted/10 p-6 rounded-lg border flex justify-center items-center">
-            <div className="w-full max-w-md sm:max-w-lg">
-              <Doughnut data={doughnutChartData} options={doughnutOptions} />
+      {/* Top Targeted Sectors */}
+      <HomeSection title="Top Targeted Sectors Globally">
+        {sectorStats.length > 0 && (
+          <div className="flex justify-center p-6 rounded-lg border bg-muted/10">
+            <div className="w-full max-w-md">
+              <Doughnut data={doughnutData} options={{ responsive: true }} />
             </div>
           </div>
-        </HomeSection>
-      )}
+        )}
+      </HomeSection>
 
-      {actorDetails && (
+      {/* Modal */}
+      {modalContent && (
         <Modal
-          title={actorDetails.title}
-          content={<ReactMarkdown>{actorDetails.content}</ReactMarkdown>}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          title={modalContent.title}
+          content={<ReactMarkdown>{modalContent.content}</ReactMarkdown>}
+          isOpen={!!modalContent}
+          onClose={() => setModalContent(null)}
         />
       )}
     </div>

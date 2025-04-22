@@ -14,6 +14,7 @@ import {
 import { HomeSection } from "@/components/HomeSection";
 import Modal from "@/components/Modal";
 import ReactMarkdown from "react-markdown";
+import RP_Card from "@/components/RP_Card";
 
 import {
   Chart as ChartJS,
@@ -43,6 +44,7 @@ type ArxivPaper = {
   title: string;
   summary: string;
   link: string;
+  published?: string;
 };
 
 type SectorStat = {
@@ -61,15 +63,11 @@ export default function Research() {
   const modalContent: Record<string, ThreatActor> = {
     RansomHouse: {
       title: "RansomHouse",
-      content: `**RansomHouse** is an extortion group known for stealing sensitive data without necessarily encrypting systems.
-
-In March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.`,
+      content: `**RansomHouse** is an extortion group known for stealing sensitive data without necessarily encrypting systems.\n\nIn March 2025, RansomHouse claimed responsibility for breaching **Loretto Hospital** in Chicago, stealing **1.5TB** of patient and administrative data.`,
     },
     LockBit: {
       title: "LockBit",
-      content: `**LockBit** is one of the most active RaaS (Ransomware-as-a-Service) operations globally.
-
-It has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.`,
+      content: `**LockBit** is one of the most active RaaS (Ransomware-as-a-Service) operations globally.\n\nIt has targeted **CDW**, **Illinois state agencies**, and several logistics and manufacturing companies in the Midwest.`,
     },
   };
 
@@ -125,7 +123,7 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
     responsive: true,
     plugins: {
       legend: {
-        position: "bottom",
+        position: "bottom" as const,
         labels: {
           color: "#d1d5db",
           font: { family: "monospace" },
@@ -143,30 +141,34 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <h1 className="text-4xl font-mono font-bold mb-4">Cyber Threat Research</h1>
-        <p className="text-muted-foreground max-w-2xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h1 className="text-4xl md:text-5xl font-mono font-bold mb-4">Cyber Threat Research</h1>
+        <p className="text-muted-foreground max-w-2xl text-base md:text-lg">
           Investigating threat actors, ransomware campaigns, and ongoing breaches with a focus on Illinois, the Midwest, and North America.
         </p>
       </motion.div>
 
       <HomeSection title="Threat Actor Spotlights">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {Object.keys(modalContent).map((actor) => (
             <div
               key={actor}
-              className="border border-border p-4 rounded-md bg-muted/20 cursor-pointer"
+              className="border border-border p-5 rounded-xl bg-muted/20 cursor-pointer hover:bg-muted/30 transition"
               onClick={() => {
                 setActorDetails(modalContent[actor]);
                 setIsModalOpen(true);
               }}
             >
-              <h3 className="font-mono font-medium text-lg mb-1 flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-red-500" />
+              <h3 className="font-mono font-medium text-lg flex items-center gap-2 mb-2">
+                <ShieldAlert className="h-5 w-5 text-red-500" />
                 {modalContent[actor].title}
               </h3>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground mb-3">
                 {modalContent[actor].content.split("\n")[0]}
               </p>
               <Badge variant="secondary">{actor === "RansomHouse" ? "Healthcare" : "Manufacturing"}</Badge>
@@ -176,21 +178,16 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
       </HomeSection>
 
       {papers.length > 0 && (
-        <HomeSection title="Cybersecurity Research Papers">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <HomeSection title="Latest Cybersecurity Research">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {papers.map((paper, i) => (
-              <div key={i} className="border border-border p-4 rounded-md bg-secondary/50 space-y-2">
-                <h3 className="font-mono font-medium text-base">{paper.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-5">{paper.summary}</p>
-                <a
-                  href={paper.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm underline text-blue-500"
-                >
-                  Read full paper
-                </a>
-              </div>
+              <RP_Card
+                key={i}
+                title={paper.title}
+                summary={paper.summary}
+                link={paper.link}
+                published={paper.published}
+              />
             ))}
           </div>
         </HomeSection>
@@ -219,9 +216,9 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
 
           <div className="space-y-4">
             {filteredVictims.map((v) => (
-              <div key={`${v.victim}-${v.attackdate}`} className="border border-border p-4 rounded-md bg-background/40">
+              <div key={`${v.victim}-${v.attackdate}`} className="border border-border p-5 rounded-lg bg-background/40">
                 <div className="flex justify-between items-center mb-1">
-                  <h3 className="font-mono font-medium">{v.victim || "Unknown Victim"}</h3>
+                  <h3 className="font-mono font-medium text-base md:text-lg">{v.victim || "Unknown Victim"}</h3>
                   <Badge variant="outline">{v.group}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -245,9 +242,21 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
 
       {sectorStats.length > 0 && (
         <HomeSection title="Top Targeted Sectors">
-          <div className="bg-muted/10 p-6 rounded-lg border flex justify-center items-center">
+          <div className="bg-muted/10 p-6 rounded-xl border flex justify-center items-center">
             <div className="w-full max-w-md sm:max-w-lg">
-              <Doughnut data={doughnutChartData} options={{...doughnutOptions, plugins: { legend: { ...doughnutOptions?.plugins?.legend, position: 'bottom' }}}} />
+              <Doughnut
+                data={doughnutChartData}
+                options={{
+                  ...doughnutOptions,
+                  plugins: {
+                    ...doughnutOptions.plugins,
+                    legend: {
+                      ...doughnutOptions.plugins.legend,
+                      position: "bottom",
+                    },
+                  },
+                }}
+              />
             </div>
           </div>
         </HomeSection>

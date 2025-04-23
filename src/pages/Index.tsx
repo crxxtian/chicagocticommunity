@@ -42,11 +42,15 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 
+// your custom cards
 import { ContentCard } from "@/components/ContentCard";
 import VictimCard from "@/components/VictimCard";
 import RP_Card from "@/components/RP_Card";
+
 import { cn } from "@/lib/utils";
+// featuredRef = { type: 'news', id: '/news/your-slug' }
 import { featuredRef } from "@/config/featured";
+
 
 // —————————————————————————————————
 // Reusable DashboardSection
@@ -71,6 +75,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+
   useEffect(() => {
     const obs = new IntersectionObserver(
       (entries) => {
@@ -86,6 +91,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
+
   return (
     <motion.div
       ref={ref}
@@ -101,6 +107,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
           </CardTitle>
           <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
+
         <CardContent className={cn("grid gap-4 px-4 py-2", cols)}>
           {isLoading &&
             Array.from({ length: 3 }).map((_, i) => (
@@ -109,13 +116,16 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
                 className="h-20 w-full rounded-md bg-muted/50"
               />
             ))}
+
           {error && (
             <p className="text-destructive text-center w-full">
               Unable to fetch data
             </p>
           )}
+
           {!isLoading && !error && children}
         </CardContent>
+
         {viewMoreLink && !isLoading && !error && (
           <CardFooter className="px-4 py-2 border-t border-border/50">
             <Button asChild variant="ghost" size="sm" className="w-full">
@@ -129,6 +139,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
     </motion.div>
   );
 };
+
 
 // —————————————————————————————————
 // Data interfaces
@@ -164,6 +175,7 @@ interface MiniReport {
   badge: string;
   tags?: string[];
 }
+
 
 // —————————————————————————————————
 // Index page
@@ -221,13 +233,13 @@ const Index: React.FC = () => {
     },
   ];
 
-  // fetch helper
-  async function fetchJSON<T>(
+  // generic fetch helper
+  const fetchJSON = async <T,>(
     url: string,
     setData: React.Dispatch<React.SetStateAction<T[]>>,
     setLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setError: React.Dispatch<React.SetStateAction<string | null>>
-  ) {
+  ) => {
     setLoading(true);
     setError(null);
     try {
@@ -240,7 +252,7 @@ const Index: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   // initial load
   useEffect(() => {
@@ -277,27 +289,22 @@ const Index: React.FC = () => {
           n.tags?.includes(selectedCategory)
       )
     : allNews;
-  const sortedNews = filteredNews
+  let sortedNews = filteredNews
     .slice()
     .sort((a, b) => {
       const da = +new Date(a.date);
       const db = +new Date(b.date);
       return sortOrder === "desc" ? db - da : da - db;
-    })
-    .slice(0, 3);
+    });
 
-  // pick featured dynamically
-  const combined: Record<string, any[]> = {
-    news: allNews,
-    research: papers,
-    ransomware: victims,
-    miniReport: miniReportsData.map((r) => ({ ...r, id: r.link })),
-  };
-  const rawFeatured =
-    combined[featuredRef.type]?.find(
-      (it: any) => it.link === featuredRef.id || it.id === featuredRef.id
-    ) || allNews[0] || null;
+  // pull & remove featured
+  const featured = allNews.find((n) => n.link === featuredRef.id) ?? null;
+  if (featured) {
+    sortedNews = sortedNews.filter((n) => n.link !== featured.link);
+  }
+  sortedNews = sortedNews.slice(0, 3);
 
+  // date formatting
   const fmt = (iso: string) => {
     try {
       return format(parseISO(iso), "MMM d, yyyy");
@@ -347,24 +354,20 @@ const Index: React.FC = () => {
           </form>
         </motion.div>
 
-        {/* featured */}
-        {rawFeatured && (
+        {/* Featured Story */}
+        {featured && (
           <section>
             <Card className="p-6 bg-card border-border rounded-lg hover:shadow-lg transition-shadow">
               <h2 className="text-2xl font-semibold mb-2">Featured Story</h2>
               <p className="text-muted-foreground mb-4">
-                {rawFeatured.snippet ?? rawFeatured.summary ?? rawFeatured.description}
+                {featured.snippet ?? "No summary available."}
               </p>
               <div className="flex justify-between text-sm text-muted-foreground mb-4">
-                <span>
-                  {fmt(rawFeatured.date ?? rawFeatured.discovered)}
-                </span>
-                <span className="uppercase">
-                  {rawFeatured.badge || rawFeatured.badge}
-                </span>
+                <span>{fmt(featured.date)}</span>
+                <span className="uppercase">{featured.badge}</span>
               </div>
               <Link
-                to={rawFeatured.link}
+                to={featured.link}
                 className="inline-flex items-center text-primary hover:underline"
               >
                 Read more <ArrowRight className="ml-1 h-4 w-4" />
@@ -468,6 +471,7 @@ const Index: React.FC = () => {
                 attackdate={v.discovered}
                 activity={v.sector ?? "Unknown"}
                 country={v.country ?? "Unknown"}
+                claim_url={v.url}
               />
             ))}
           </DashboardSection>

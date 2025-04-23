@@ -1,9 +1,10 @@
+// src/pages/Index.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format, parseISO } from "date-fns";
 
-// --- UI Components ---
+// -- shadcn/ui components --
 import {
   Card,
   CardHeader,
@@ -14,29 +15,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+
+// -- custom cards/hooks/utilities --
 import { ContentCard } from "@/components/ContentCard";
 import VictimCard from "@/components/VictimCard";
 import RP_Card from "@/components/RP_Card";
+import { cn } from "@/lib/utils";
 
-// --- Icons ---
+// -- icons --
 import {
   ArrowRight,
   Rss,
   FlaskConical,
   Skull,
-  BookOpen,
-  Search,
   FileText,
   UserCheck,
-  MessageSquare,
+  Search,
   Library,
 } from "lucide-react";
 
-// --- Utilities & Hooks ---
-import { cn } from "@/lib/utils";
-import { FooterBackground } from "@/components/FooterBackground";
-
-// --- Interfaces for API Data ---
+// -- Data interfaces --
 interface NewsItem {
   title: string;
   link: string;
@@ -45,15 +43,12 @@ interface NewsItem {
   sourceTitle?: string;
   tags?: string[];
 }
-
 interface ResearchPaper {
   title: string;
   summary: string;
   link: string;
   tags?: string[];
-  published?: string;
 }
-
 interface RansomwareVictim {
   victim: string;
   group_name?: string;
@@ -62,8 +57,6 @@ interface RansomwareVictim {
   country?: string;
   url?: string;
 }
-
-// --- Interfaces for Static Data ---
 interface MiniReport {
   title: string;
   description: string;
@@ -73,14 +66,7 @@ interface MiniReport {
   tags?: string[];
 }
 
-interface ThreatProfile {
-  id: number;
-  title: string;
-  description: string;
-  link: string;
-}
-
-// --- Static Data ---
+// -- Static mini-reports for demo/fallback --
 const miniReportsData: MiniReport[] = [
   {
     title: "Chicago Public Schools Data Breach Exposes Student Information",
@@ -102,136 +88,89 @@ const miniReportsData: MiniReport[] = [
   },
 ];
 
-const threatProfilesData: ThreatProfile[] = [
-  {
-    id: 1,
-    title: "RansomHouse Targets Chicago Healthcare",
-    description:
-      "RansomHouse claimed a March 2025 breach of Loretto Hospital in Chicago, stealing 1.5TB of patient data.",
-    link: "/research",
-  },
-  {
-    id: 2,
-    title: "LockBit’s Midwest Manufacturing Victims",
-    description:
-      "LockBit ransomware continues to target manufacturers in Illinois and nearby states.",
-    link: "/research",
-  },
-];
-
-// --- Helper Function for Date Formatting ---
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return "N/A";
+// -- Helper for formatting dates --
+const formatDate = (iso?: string) => {
+  if (!iso) return "Unknown date";
   try {
-    return format(parseISO(dateString), "MMM d, yyyy");
-  } catch (e) {
-    console.error("Error formatting date:", dateString, e);
+    return format(parseISO(iso), "MMM d, yyyy");
+  } catch {
     return "Invalid date";
   }
 };
 
-// --- Reusable Dashboard Section Component ---
-interface DashboardSectionProps {
+// -- The reusable section component --
+interface SectionProps {
   title: string;
   icon: React.ElementType;
   isLoading: boolean;
   error: string | null;
-  children: React.ReactNode;
   viewMoreLink?: string;
-  className?: string;
-  gridCols?: string;
-  itemCount?: number;
+  children: React.ReactNode;
+  cols?: string; // e.g. "grid-cols-1 md:grid-cols-2"
 }
-
-const DashboardSection: React.FC<DashboardSectionProps> = ({
+const DashboardSection: React.FC<SectionProps> = ({
   title,
   icon: Icon,
   isLoading,
   error,
-  children,
   viewMoreLink,
-  className,
-  gridCols = "grid-cols-1",
-  itemCount = 3,
+  children,
+  cols = "grid-cols-1",
 }) => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    const obs = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observer.unobserve(entry.target);
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            setVisible(true);
+            obs.unobserve(e.target);
           }
         });
       },
       { threshold: 0.2 }
     );
-
-    const currentRef = sectionRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
-    };
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
 
   return (
     <motion.div
-      ref={sectionRef}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isVisible ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={visible ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <Card
-        className={cn(
-          "flex flex-col h-full bg-card border border-border/50 rounded-[--radius]",
-          "transition-all duration-300 hover:shadow-md hover:border-primary/30",
-          className
-        )}
-      >
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
-          <CardTitle className="text-sm font-mono font-semibold tracking-tight text-card-foreground">
+      <Card className="flex flex-col bg-card border border-border/50 rounded-[--radius] hover:shadow-md transition-shadow">
+        <CardHeader className="flex items-center justify-between px-4 pt-4 pb-2">
+          <CardTitle className="text-sm font-mono font-semibold text-card-foreground">
             {title}
           </CardTitle>
           <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent className="flex-grow space-y-3 pt-0 pb-3 px-4">
+        <CardContent className={cn("px-4 pb-4 pt-2 grid gap-4", cols)}>
           {isLoading && (
-            <div className={cn("grid gap-3", gridCols)}>
-              {[...Array(itemCount)].map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="w-full h-20 rounded-[--radius] bg-muted/50"
-                />
-              ))}
-            </div>
+            Array.from({ length:  cols.includes("grid-cols-2") ? 2 : 1 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-[--radius]" />
+            ))
           )}
           {error && (
-            <p className="text-sm text-destructive font-sans text-center py-4">
-              Failed to load data. Please try again later.
-            </p>
+            <p className="text-sm text-destructive text-center">{error}</p>
           )}
-          {!isLoading && !error && (
-            <div className={cn("grid gap-3", gridCols)}>{children}</div>
-          )}
+          {!isLoading && !error && children}
         </CardContent>
-        {viewMoreLink && !isLoading && !error && React.Children.count(children) > 0 && (
-          <CardFooter className="pt-0 pb-3 px-4 border-t border-border/50 mt-auto">
+        {viewMoreLink && !isLoading && !error && (
+          <CardFooter className="px-4 pb-4 pt-2 border-t border-border/50">
             <Button
               variant="ghost"
               size="sm"
               asChild
-              className="w-full text-primary font-sans hover:bg-primary/5 hover:text-primary justify-center group transition-colors"
+              className="w-full justify-center text-primary hover:bg-primary/10 transition-colors"
             >
               <Link to={viewMoreLink}>
-                View More
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                View More <ArrowRight className="inline ml-1 h-4 w-4" />
               </Link>
             </Button>
           </CardFooter>
@@ -241,310 +180,249 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
   );
 };
 
-// --- Index Page Component ---
+// -- Main Index Page --
 const Index: React.FC = () => {
-  // --- State Management ---
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [research, setResearch] = useState<ResearchPaper[]>([]);
-  const [ransomware, setRansomware] = useState<RansomwareVictim[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
-  const [researchLoading, setResearchLoading] = useState(true);
-  const [ransomwareLoading, setRansomwareLoading] = useState(true);
-  const [newsError, setNewsError] = useState<string | null>(null);
-  const [researchError, setResearchError] = useState<string | null>(null);
-  const [ransomwareError, setRansomwareError] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState("");
-  const navigate = useNavigate();
+  const [papers, setPapers] = useState<ResearchPaper[]>([]);
+  const [ransom, setRansom] = useState<RansomwareVictim[]>([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+  const [loadingPapers, setLoadingPapers] = useState(true);
+  const [loadingRansom, setLoadingRansom] = useState(true);
+  const [errorNews, setErrorNews] = useState<string | null>(null);
+  const [errorPapers, setErrorPapers] = useState<string | null>(null);
+  const [errorRansom, setErrorRansom] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const nav = useNavigate();
 
-  // --- Data Fetching Logic ---
+  // fetch wrapper
+  async function fetchData<T>(
+    url: string,
+    setter: React.Dispatch<React.SetStateAction<T[]>>,
+    loadingSetter: React.Dispatch<React.SetStateAction<boolean>>,
+    errorSetter: React.Dispatch<React.SetStateAction<string | null>>,
+    key?: string
+  ) {
+    loadingSetter(true);
+    errorSetter(null);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.statusText);
+      const json = await res.json();
+      const arr: T[] = key ? json[key] : json;
+      setter(Array.isArray(arr) ? arr : []);
+    } catch (e: any) {
+      errorSetter(e.message || "Unable to fetch data");
+    } finally {
+      loadingSetter(false);
+    }
+  }
+
+  // on mount
   useEffect(() => {
-    const fetchData = async <T,>(
-      url: string,
-      setData: React.Dispatch<React.SetStateAction<T[]>>,
-      setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-      setError: React.Dispatch<React.SetStateAction<string | null>>,
-      limit: number,
-      dataPath?: string
-    ) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        const items = dataPath ? data[dataPath] : data;
-        setData(Array.isArray(items) ? items.slice(0, limit) : []);
-      } catch (error) {
-        console.error(`Failed to fetch data from ${url}:`, error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : "An unknown error occurred while fetching data."
-        );
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData("/api/fetch-news", setNews, setNewsLoading, setNewsError, 3, "results");
-    fetchData("/api/arxiv?limit=3", setResearch, setResearchLoading, setResearchError, 3);
-    fetchData(
-      "/api/ransomware?type=recent_victims&country=us&limit=3",
-      setRansomware,
-      setRansomwareLoading,
-      setRansomwareError,
-      3
+    fetchData<NewsItem>("/api/fetch-news", setNews, setLoadingNews, setErrorNews, "results");
+    fetchData<ResearchPaper>("/api/arxiv?limit=3", setPapers, setLoadingPapers, setErrorPapers);
+    fetchData<RansomwareVictim>(
+      "/api/ransomware?type=recent_victims&limit=3",
+      setRansom,
+      setLoadingRansom,
+      setErrorRansom
     );
   }, []);
 
-  // --- Event Handlers ---
-  const handleSearch = (e: React.FormEvent) => {
+  const doSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedQuery = searchInput.trim();
-    if (trimmedQuery) {
-      navigate(`/search?query=${encodeURIComponent(trimmedQuery)}`);
-    }
+    if (search.trim()) nav(`/search?query=${encodeURIComponent(search.trim())}`);
   };
 
-  // --- Animation Variants ---
-  const heroVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-  };
-
-  // --- Render Logic ---
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Background blob animations */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
+    <div className="relative bg-background min-h-screen text-foreground overflow-hidden">
+
+      {/* subtle background blobs */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="blob-animation" />
         <div
           className="blob-animation"
-          style={{ top: "60%", left: "80%", animationDelay: "5s", opacity: 0.06 }}
+          style={{ top: "60%", left: "80%", opacity: 0.06, animationDelay: "5s" }}
         />
       </div>
 
-      {/* Main content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 space-y-16 md:space-y-24">
-        {/* Hero Section */}
-        <motion.section
-          variants={heroVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-center md:text-left max-w-6xl mx-auto space-y-6"
+      <div className="container mx-auto px-4 py-12 space-y-16">
+
+        {/* Hero + Search */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="max-w-3xl mx-auto text-center space-y-4"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-mono font-bold tracking-tighter !leading-tight text-foreground">
+          <h1 className="text-5xl font-mono font-bold tracking-tight">
             Chicago Cyber Threat Intelligence Community
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground font-sans max-w-3xl mx-auto md:mx-0 leading-relaxed">
+          <p className="text-lg text-muted-foreground">
             Your central hub for cyber defense in Chicagoland. Access real-time
             intelligence, share valuable insights, and strengthen local resilience.
           </p>
-          <form
-            onSubmit={handleSearch}
-            className="flex w-full max-w-md sm:max-w-lg items-center gap-3 pt-4 mx-auto md:mx-0"
-          >
+          <form onSubmit={doSearch} className="flex max-w-md mx-auto gap-3">
             <Input
-              type="search"
-              placeholder="Search news, threats, resources..."
-              aria-label="Search for cybersecurity news, threats, and resources"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="flex-1 text-base h-11 rounded-[--radius] bg-background border-input focus:ring-2 focus:ring-ring font-sans"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search news, threats, resources…"
+              className="flex-1"
             />
-            <Button
-              type="submit"
-              size="lg"
-              className="h-11 rounded-[--radius] bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <Search className="h-5 w-5 mr-2" />
-              Search
+            <Button type="submit" className="bg-primary text-primary-foreground">
+              <Search className="mr-2 h-5 w-5" /> Search
             </Button>
           </form>
-        </motion.section>
+        </motion.div>
 
-        {/* Dashboard Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {/* Latest News Section */}
+        {/* Featured News (full width) */}
+        <section>
+          <Card className="bg-card border-border rounded-[--radius] p-6 hover:shadow-lg transition-shadow">
+            {loadingNews ? (
+              <Skeleton className="h-32 w-full rounded-[--radius]" />
+            ) : errorNews ? (
+              <p className="text-center text-destructive">{errorNews}</p>
+            ) : news[0] ? (
+              <div>
+                <h2 className="text-2xl font-semibold mb-2">{news[0].title}</h2>
+                <p className="text-muted-foreground mb-4">
+                  {news[0].snippet || "No description available."}
+                </p>
+                <Link
+                  to={news[0].link}
+                  className="inline-flex items-center text-primary hover:underline"
+                  target="_blank"
+                >
+                  Read full story <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">
+                No featured news available.
+              </p>
+            )}
+          </Card>
+        </section>
+
+        {/* Two-column: News ↔ Ransomware */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <DashboardSection
-            title="Latest News Feed"
+            title="Latest News"
             icon={Rss}
-            isLoading={newsLoading}
-            error={newsError}
+            isLoading={loadingNews}
+            error={errorNews}
             viewMoreLink="/news"
-            className="lg:col-span-1"
-            itemCount={3}
+            cols="grid-cols-1"
           >
-            {news.length > 0 ? (
-              news.map((item) => (
-                <ContentCard
-                  key={item.link}
-                  title={item.title}
-                  description={item.snippet || "No description available."}
-                  link={item.link}
-                  date={formatDate(item.isoDate)}
-                  source={item.sourceTitle || "Unknown Source"}
-                  badge={item.sourceTitle || "News"}
-                  tags={item.tags}
-                />
-              ))
-            ) : (
-              !newsLoading && (
-                <p className="text-sm text-muted-foreground font-sans text-center py-6">
-                  No recent news available.
-                </p>
-              )
-            )}
+            {news.slice(0, 3).map((n) => (
+              <ContentCard
+                key={n.link}
+                title={n.title}
+                description={n.snippet}
+                link={n.link}
+                date={formatDate(n.isoDate)}
+                source={n.sourceTitle}
+                tags={n.tags}
+              />
+            ))}
           </DashboardSection>
 
-          {/* Recent Ransomware Victims Section */}
           <DashboardSection
-            title="Recent Ransomware Victims (US)"
+            title="Ransomware Victims"
             icon={Skull}
-            isLoading={ransomwareLoading}
-            error={ransomwareError}
+            isLoading={loadingRansom}
+            error={errorRansom}
             viewMoreLink="/research"
-            className="lg:col-span-1"
-            itemCount={3}
+            cols="grid-cols-1"
           >
-            {ransomware.length > 0 ? (
-              ransomware.map((item, index) => (
-                <VictimCard
-                  key={`${item.victim}-${item.discovered}-${index}`}
-                  victim={item.victim}
-                  group={item.group_name || "Unknown Group"}
-                  attackdate={item.discovered}
-                  activity={item.activity || "N/A"}
-                  country={item.country || "N/A"}
-                  claim_url={item.url}
-                />
-              ))
-            ) : (
-              !ransomwareLoading && (
-                <p className="text-sm text-muted-foreground font-sans text-center py-6">
-                  No recent US victims tracked.
-                </p>
-              )
-            )}
+            {ransom.map((r, i) => (
+              <VictimCard
+                key={i}
+                victim={r.victim}
+                group={r.group_name}
+                attackdate={r.discovered}
+                activity={r.activity}
+                country={r.country}
+                claim_url={r.url}
+              />
+            ))}
           </DashboardSection>
+        </section>
 
-          {/* Research Highlights Section */}
+        {/* Two-column: Research ↔ Mini-Reports */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <DashboardSection
-            title="Research Paper Highlights"
+            title="Research Highlights"
             icon={FlaskConical}
-            isLoading={researchLoading}
-            error={researchError}
+            isLoading={loadingPapers}
+            error={errorPapers}
             viewMoreLink="/research"
-            className="lg:col-span-1"
-            itemCount={3}
+            cols="grid-cols-1"
           >
-            {research.length > 0 ? (
-              research.map((item) => (
-                <RP_Card
-                  key={item.link}
-                  title={item.title}
-                  summary={item.summary || "No summary available."}
-                  link={item.link}
-                  tags={item.tags || []}
-                />
-              ))
-            ) : (
-              !researchLoading && (
-                <p className="text-sm text-muted-foreground font-sans text-center py-6">
-                  No recent research papers found.
-                </p>
-              )
-            )}
+            {papers.map((p) => (
+              <RP_Card
+                key={p.link}
+                title={p.title}
+                summary={p.summary}
+                link={p.link}
+                tags={p.tags}
+              />
+            ))}
           </DashboardSection>
 
-          {/* Featured Mini-Reports Section */}
           <DashboardSection
-            title="Featured Mini-Reports"
+            title="Mini Reports"
             icon={FileText}
             isLoading={false}
             error={null}
             viewMoreLink="/reports"
-            className="lg:col-span-1 sm:col-span-1"
-            itemCount={miniReportsData.length}
+            cols="grid-cols-1"
           >
-            {miniReportsData.map((report, i) => (
+            {miniReportsData.map((rep, i) => (
               <ContentCard
                 key={i}
-                title={report.title}
-                description={report.description}
-                date={formatDate(report.date)}
-                tags={report.tags || []}
-                link={report.link}
-                badge={report.badge}
+                title={rep.title}
+                description={rep.description}
+                link={rep.link}
+                date={formatDate(rep.date)}
+                badge={rep.badge}
+                tags={rep.tags}
               />
             ))}
           </DashboardSection>
+        </section>
 
-          {/* Threat Actor Spotlights Section */}
-          <DashboardSection
-            title="Threat Actor Spotlights"
-            icon={UserCheck}
-            isLoading={false}
-            error={null}
-            viewMoreLink="/research"
-            className="lg:col-span-1 sm:col-span-1"
-            itemCount={threatProfilesData.length}
-          >
-            {threatProfilesData.map((profile) => (
-              <ContentCard
-                key={profile.id}
-                title={profile.title}
-                description={profile.description}
-                link={profile.link}
-                badge="Spotlight"
-              />
-            ))}
-          </DashboardSection>
-
-          {/* Quick Links Section */}
+        {/* Links (full width) */}
+        <section>
           <DashboardSection
             title="Explore CCTIC"
             icon={Library}
             isLoading={false}
             error={null}
-            className="sm:col-span-2 lg:col-span-1"
-            gridCols="grid-cols-1"
+            cols="grid-cols-1"
           >
-            <div className="flex flex-col space-y-3">
+            <div className="space-y-3">
               <Button
                 variant="outline"
-                size="lg"
                 asChild
-                className="justify-start text-base font-sans text-foreground hover:bg-accent hover:text-accent-foreground transition-colors rounded-[--radius] h-11"
+                className="w-full justify-start"
               >
                 <Link to="/discussions">
-                  <MessageSquare className="mr-3 h-5 w-5 text-primary group-hover:text-accent-foreground" />
-                  Discussions
+                  <UserCheck className="mr-2 h-5 w-5" /> Discussions
                 </Link>
               </Button>
               <Button
                 variant="outline"
-                size="lg"
                 asChild
-                className="justify-start text-base font-sans text-foreground hover:bg-accent hover:text-accent-foreground transition-colors rounded-[--radius] h-11"
+                className="w-full justify-start"
               >
                 <Link to="/resources">
-                  <BookOpen className="mr-3 h-5 w-5 text-primary group-hover:text-accent-foreground" />
-                  Resources
+                  <Library className="mr-2 h-5 w-5" /> Resources
                 </Link>
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                asChild
-                className="justify-start text-base font-sans text-foreground hover:bg-accent hover:text-accent-foreground transition-colors rounded-[--radius] h-11"
-              >
+              <Button variant="outline" asChild className="w-full justify-start">
                 <Link to="/about">
-                  <UserCheck className="mr-3 h-5 w-5 text-primary group-hover:text-accent-foreground" />
-                  About CCTIC
+                  <UserCheck className="mr-2 h-5 w-5" /> About CCTIC
                 </Link>
               </Button>
             </div>

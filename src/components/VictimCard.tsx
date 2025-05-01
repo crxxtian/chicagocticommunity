@@ -31,9 +31,6 @@ export default function VictimCard({
     formattedDate = attackdate;
   }
 
-  const cleanedURL = claim_url?.replace(/^https?:\/\//, "") ?? "";
-  const isOnion = cleanedURL.includes(".onion");
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -46,7 +43,9 @@ export default function VictimCard({
         <h3 className="font-mono font-semibold text-lg leading-tight break-words">
           {victim || "Unknown Victim"}
         </h3>
-        <Badge variant="outline" className="text-xs px-2 py-0.5">{group}</Badge>
+        <Badge variant="outline" className="text-xs px-2 py-0.5">
+          {group || "Unknown"}
+        </Badge>
       </div>
 
       <div className="flex flex-wrap text-sm text-muted-foreground gap-x-4 gap-y-1 mt-2">
@@ -59,19 +58,11 @@ export default function VictimCard({
         <div className="mt-4 text-xs text-muted-foreground italic space-y-1">
           <div className="flex items-center gap-2 font-medium text-red-500">
             <Shield className="w-4 h-4 shrink-0" />
-            <span>Leak site (reference only)</span>
+            <span>Leak site detected by group: <strong>{group}</strong></span>
           </div>
-          <a
-            href={claim_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "break-words underline hover:text-blue-400 transition-colors",
-              isOnion && "text-red-400"
-            )}
-          >
-            {cleanedURL}{isOnion ? " (onion)" : ""}
-          </a>
+          <div className="pl-6 text-muted-foreground">
+            URL hidden for safety.
+          </div>
         </div>
       )}
     </motion.div>

@@ -1,7 +1,10 @@
-import { ArrowRight, ExternalLink } from "lucide-react";
+// src/components/ContentCard.tsx
+
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { ArrowRight, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ContentCardProps {
   title: string;
@@ -13,170 +16,194 @@ interface ContentCardProps {
   source?: string;
   external?: boolean;
   image?: string | null;
-  className?: string;
   variant?: "news" | "report" | "spotlight";
+  className?: string;
 }
 
+// ─── Module-scope constants ─────────────────────────────────────────────
+const BADGE_CLASSES: Record<string, string> = {
+  Ransomware:      "bg-red-600 text-white",
+  CVE:             "bg-yellow-400 text-black",
+  CISA:            "bg-blue-600 text-white",
+  APT:             "bg-purple-700 text-white",
+  Chicago:         "bg-green-600 text-white",
+  Vulnerability:   "bg-orange-500 text-white",
+  "Data Breach":   "bg-rose-500 text-white",
+  "Zero-Day":      "bg-pink-500 text-white",
+  Phishing:        "bg-indigo-600 text-white",
+  Healthcare:      "bg-emerald-600 text-white",
+  Education:       "bg-cyan-600 text-white",
+  Russia:          "bg-red-800 text-white",
+  China:           "bg-orange-700 text-white",
+  Iran:            "bg-teal-600 text-white",
+  "North Korea":   "bg-blue-800 text-white",
+  "United States": "bg-gray-600 text-white",
+  NATO:            "bg-sky-700 text-white",
+  Malware:         "bg-zinc-800 text-white",
+  Exploit:         "bg-orange-600 text-white",
+  Patch:           "bg-lime-500 text-black",
+  DDoS:            "bg-fuchsia-700 text-white",
+  General:         "bg-muted text-muted-foreground",
+};
+
+const VARIANT_CONFIG = {
+  news:      { clampTitle: "line-clamp-4", clampDesc: "line-clamp-3", minH: "min-h-[360px]" },
+  report:    { clampTitle: "line-clamp-2", clampDesc: "line-clamp-2", minH: "min-h-[280px]" },
+  spotlight: { clampTitle: "line-clamp-2", clampDesc: "line-clamp-2", minH: "min-h-[240px]" },
+} as const;
+
+// ─── Sub-components ─────────────────────────────────────────────────────
+interface CardBodyProps {
+  title: string;
+  formattedDate: string | null;
+  description: string;
+  tags: string[];
+  badgeClass: string;
+  clampTitle: string;
+  clampDesc: string;
+}
+const CardBody: React.FC<CardBodyProps> = ({
+  title,
+  formattedDate,
+  description,
+  tags,
+  badgeClass,
+  clampTitle,
+  clampDesc,
+}) => (
+  <div className="flex-1 space-y-2">
+    <header className="flex justify-between items-start">
+      <h3
+        className={cn("font-semibold text-base leading-snug break-words", clampTitle)}
+        title={title}
+      >
+        {title}
+      </h3>
+      {formattedDate && (
+        <time className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
+          {formattedDate}
+        </time>
+      )}
+    </header>
+    <p className={cn("text-sm text-muted-foreground", clampDesc)}>
+      {description || <i>No summary available.</i>}
+    </p>
+    {tags.length > 0 && (
+      <div className="flex flex-wrap gap-2 pt-2">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className={cn("text-xs px-2 py-0.5 rounded-full border", badgeClass)}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+interface CardFooterProps {
+  link?: string;
+  external?: boolean;
+}
+const CardFooter: React.FC<CardFooterProps> = ({ link, external }) => {
+  if (!link) return null;
+  return (
+    <div className="mt-4 flex items-center text-sm font-medium text-primary hover:underline">
+      {external ? (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Read more externally"
+        >
+          Read more <ExternalLink className="inline-block ml-1 h-4 w-4" />
+        </a>
+      ) : (
+        <Link to={link} aria-label="Read more">
+          Read more <ArrowRight className="inline-block ml-1 h-4 w-4" />
+        </Link>
+      )}
+    </div>
+  );
+};
+
+// ─── Main Component ─────────────────────────────────────────────────────
 export function ContentCard({
   title,
   description,
-  link,
   date,
   badge = "General",
   tags = [],
-  source,
+  link,
   external = false,
   image,
-  className,
   variant = "news",
+  className,
 }: ContentCardProps) {
-  const formattedDate = date
-    ? new Date(date).toLocaleString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
+  const { clampTitle, clampDesc, minH } = VARIANT_CONFIG[variant];
 
-  const badgeColorMap: Record<string, string> = {
-    Ransomware: "bg-red-600 text-white",
-    CVE: "bg-yellow-400 text-black",
-    CISA: "bg-blue-600 text-white",
-    APT: "bg-purple-700 text-white",
-    Chicago: "bg-green-600 text-white",
-    Vulnerability: "bg-orange-500 text-white",
-    "Data Breach": "bg-rose-500 text-white",
-    "Zero-Day": "bg-pink-500 text-white",
-    Phishing: "bg-indigo-600 text-white",
-    Healthcare: "bg-emerald-600 text-white",
-    Education: "bg-cyan-600 text-white",
-    Russia: "bg-red-800 text-white",
-    China: "bg-orange-700 text-white",
-    Iran: "bg-teal-600 text-white",
-    "North Korea": "bg-blue-800 text-white",
-    "United States": "bg-gray-600 text-white",
-    NATO: "bg-sky-700 text-white",
-    Malware: "bg-zinc-800 text-white",
-    Exploit: "bg-orange-600 text-white",
-    Patch: "bg-lime-500 text-black",
-    DDoS: "bg-fuchsia-700 text-white",
-    General: "bg-muted text-muted-foreground",
-  };
+  const formattedDate = useMemo(() => {
+    if (!date) return null;
+    return new Date(date).toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, [date]);
 
-  // Smart visual tweaks based on variant
-  const clampTitle = variant === "news" ? "line-clamp-4" : "line-clamp-2";
-  const clampDescription = variant === "news" ? "line-clamp-3" : "line-clamp-2";
-  const minHeight =
-    variant === "news"
-      ? "min-h-[360px]"
-      : variant === "report"
-      ? "min-h-[280px]"
-      : "min-h-[240px]";
+  const allTags = useMemo(() => {
+    return Array.from(
+      new Map(
+        [badge, ...tags]
+          .filter(Boolean)
+          .map((t) => [t.toLowerCase(), t])
+      ).values()
+    );
+  }, [badge, tags]);
 
-  const allTags = Array.from(
-    new Map(
-      [badge, ...tags]
-        .filter(Boolean)
-        .map((tag) => [tag.toLowerCase(), tag])
-    ).values()
-  );
+  const badgeClass = BADGE_CLASSES[badge] ?? BADGE_CLASSES.General;
 
-  const CardContent = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.015 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      viewport={{ once: true }}
-      className={cn(
-        `h-full ${minHeight} flex flex-col justify-between border border-border rounded-md p-4 hover:bg-secondary/50 transition-colors`,
-        className
-      )}
-    >
-      {image && (
-        <img
-          src={image}
-          alt=""
-          className="rounded-md mb-3 w-full h-32 object-cover"
+  const Wrapper: React.ElementType = link && !external ? Link : "div";
+  const wrapperProps = link && !external
+    ? { to: link, className: "block h-full", role: "article", "aria-label": title }
+    : {};
+
+  return (
+    <Wrapper {...wrapperProps}>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.015 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        viewport={{ once: true }}
+        className={cn(
+          "flex flex-col justify-between border border-border rounded-md p-4 bg-card",
+          minH,
+          className
+        )}
+      >
+        {image && (
+          <img
+            src={image}
+            alt={title}
+            className="rounded-md mb-3 w-full h-32 object-cover"
+          />
+        )}
+        <CardBody
+          title={title}
+          formattedDate={formattedDate}
+          description={description}
+          tags={allTags}
+          badgeClass={badgeClass}
+          clampTitle={clampTitle}
+          clampDesc={clampDesc}
         />
-      )}
-
-      <div className="space-y-2 flex-1">
-        {/* Title & date row */}
-        <div className="flex justify-between items-start gap-4">
-          <h3
-            className={cn(
-              "font-sans font-semibold text-base md:text-[1.05rem] leading-snug break-words",
-              clampTitle
-            )}
-            title={title}
-          >
-            {title.length > 250 ? title.slice(0, 245).trim() + "…" : title}
-          </h3>
-          {formattedDate && (
-            <span className="text-xs text-muted-foreground text-right shrink-0 whitespace-nowrap">
-              {formattedDate}
-            </span>
-          )}
-        </div>
-
-        {/* Description */}
-        <p className={cn("text-sm text-muted-foreground", clampDescription)}>
-          {description || <i>No summary available.</i>}
-        </p>
-
-        {/* Tags */}
-        {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            {allTags.map((tag) => (
-              <span
-                key={tag}
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-full border bg-accent text-accent-foreground",
-                  badgeColorMap[tag] ?? ""
-                )}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {source && (
-          <p className="text-xs text-muted-foreground italic pt-1">
-            Source: {source}
-          </p>
-        )}
-      </div>
-
-      {/* Footer */}
-      {link && (
-        <div className="flex items-center text-sm font-medium pt-3 text-primary hover:underline mt-auto">
-          {external ? (
-            <>
-              <a href={link} target="_blank" rel="noopener noreferrer">
-                Read more
-              </a>
-              <ExternalLink className="ml-1 h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <span>Read more</span>
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </>
-          )}
-        </div>
-      )}
-    </motion.div>
-  );
-
-  return link && !external ? (
-    <Link to={link} className="block h-full">
-      {CardContent()}
-    </Link>
-  ) : (
-    CardContent()
+        <CardFooter link={link} external={external} />
+      </motion.div>
+    </Wrapper>
   );
 }

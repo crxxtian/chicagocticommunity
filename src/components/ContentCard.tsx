@@ -181,10 +181,10 @@ export function ContentCard({
         transition={{ duration: 0.25, ease: "easeOut" }}
         viewport={{ once: true }}
         className={cn(
-          "flex flex-col justify-between border border-border rounded-md p-4 bg-card",
+          "flex flex-col justify-between rounded-xl p-5 bg-card border border-border shadow-sm transition-all hover:shadow-lg hover:scale-[1.01] duration-200",
           minH,
           className
-        )}
+        )}        
       >
         {image && (
           <img

@@ -7,42 +7,31 @@
   :root {
     --background: 270 40% 100%;
     --foreground: 270 40% 5%;
-
     --card: 270 40% 98%;
     --card-foreground: 270 40% 10%;
-
     --primary: 270 100% 55%;
     --primary-foreground: 0 0% 100%;
-
     --accent: 265 80% 75%;
     --accent-foreground: 270 40% 10%;
-
     --muted: 270 25% 90%;
     --muted-foreground: 270 20% 30%;
-
     --border: 270 20% 85%;
     --input: 270 20% 85%;
     --ring: 270 100% 50%;
-
     --radius: 0.5rem;
   }
 
   .dark {
     --background: 270 40% 6%;
     --foreground: 0 0% 98%;
-
     --card: 270 35% 8%;
     --card-foreground: 0 0% 98%;
-
     --primary: 270 100% 65%;
     --primary-foreground: 0 0% 100%;
-
     --accent: 265 90% 70%;
     --accent-foreground: 270 40% 10%;
-
     --muted: 270 25% 20%;
     --muted-foreground: 270 10% 60%;
-
     --border: 270 20% 20%;
     --input: 270 20% 20%;
     --ring: 270 100% 70%;
@@ -62,7 +51,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-mono font-semibold text-foreground tracking-tight;
+    @apply font-mono font-semibold tracking-tight text-foreground;
   }
 
   p, span, div, a {
@@ -142,8 +131,8 @@
   .bg-gradient-subtle {
     background: radial-gradient(
       circle at 30% 20%,
-      hsl(270, 50%, 12%) 0%,
-      hsl(270, 40%, 6%) 100%
+      hsl(var(--background)) 0%,
+      hsl(var(--background)) 100%
     );
   }
 

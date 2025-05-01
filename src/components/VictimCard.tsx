@@ -61,7 +61,7 @@ export default function VictimCard({
             <span>Ransomware Group: <strong>{group}</strong></span>
           </div>
           <div className="pl-6 text-muted-foreground">
-            URL hidden for safety.
+            Leak site URL hidden for safety. 
           </div>
         </div>
       )}

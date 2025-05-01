@@ -1,5 +1,3 @@
-// src/components/ContentCard.tsx
-
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -48,7 +46,7 @@ const BADGE_CLASSES: Record<string, string> = {
 
 const VARIANT_CONFIG = {
   news:      { clampTitle: "line-clamp-4", clampDesc: "line-clamp-3", minH: "min-h-[360px]" },
-  report:    { clampTitle: "line-clamp-2", clampDesc: "line-clamp-2", minH: "min-h-[280px]" },
+  report:    { clampTitle: "", clampDesc: "line-clamp-2", minH: "min-h-[320px]" }, // Removed title clamp, increased min-h
   spotlight: { clampTitle: "line-clamp-2", clampDesc: "line-clamp-2", minH: "min-h-[240px]" },
 } as const;
 
@@ -71,10 +69,10 @@ const CardBody: React.FC<CardBodyProps> = ({
   clampTitle,
   clampDesc,
 }) => (
-  <div className="flex-1 space-y-2">
-    <header className="flex justify-between items-start">
+  <div className="flex-1 space-y-3">
+    <header className="flex justify-between items-start gap-2">
       <h3
-        className={cn("font-semibold text-base leading-snug break-words", clampTitle)}
+        className={cn("font-semibold text-lg leading-tight break-words font-mono", clampTitle)}
         title={title}
       >
         {title}
@@ -85,7 +83,7 @@ const CardBody: React.FC<CardBodyProps> = ({
         </time>
       )}
     </header>
-    <p className={cn("text-sm text-muted-foreground", clampDesc)}>
+    <p className={cn("text-sm text-muted-foreground leading-relaxed", clampDesc)}>
       {description || <i>No summary available.</i>}
     </p>
     {tags.length > 0 && (
@@ -93,7 +91,7 @@ const CardBody: React.FC<CardBodyProps> = ({
         {tags.map((tag) => (
           <span
             key={tag}
-            className={cn("text-xs px-2 py-0.5 rounded-full border", badgeClass)}
+            className={cn("text-xs px-2 py-0.5 rounded-full border border-muted text-muted-foreground", badgeClass)}
           >
             {tag}
           </span>
@@ -181,7 +179,7 @@ export function ContentCard({
         transition={{ duration: 0.25, ease: "easeOut" }}
         viewport={{ once: true }}
         className={cn(
-          "flex flex-col justify-between rounded-xl p-5 bg-card border border-border shadow-sm transition-all hover:shadow-lg hover:scale-[1.01] duration-200",
+          "flex flex-col justify-between rounded-xl p-6 bg-card border border-border shadow-sm transition-all hover:shadow-md hover:scale-[1.01] duration-200",
           minH,
           className
         )}        
@@ -190,7 +188,7 @@ export function ContentCard({
           <img
             src={image}
             alt={title}
-            className="rounded-md mb-3 w-full h-32 object-cover"
+            className="rounded-md mb-4 w-full h-32 object-cover"
           />
         )}
         <CardBody

@@ -33,27 +33,56 @@ import VictimCard from "@/components/VictimCard";
 import RP_Card from "@/components/RP_Card";
 import { HomeSection } from "@/components/HomeSection";
 
+interface NewsItem {
+  title: string;
+  description: string;
+  date: string;
+  badge: string;
+  tags?: string[];
+  link: string;
+}
+
+interface Paper {
+  title: string;
+  summary: string;
+  link: string;
+}
+
+interface Victim {
+  victim: string;
+  group: string;
+  attackdate: string;
+  activity: string;
+  country: string;
+  claim_url?: string;
+}
+
 export default function Index() {
   const nav = useNavigate();
-  const [news, setNews] = useState<any[]>([]);
-  const [papers, setPapers] = useState<any[]>([]);
-  const [victims, setVictims] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+
+  // search vs news-filter vs category vs date-order
+  const [siteSearch, setSiteSearch] = useState("");
+  const [newsFilter, setNewsFilter] = useState("");
   const [category, setCategory] = useState("");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [papers, setPapers] = useState<Paper[]>([]);
+  const [victims, setVictims] = useState<Victim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // fetch all three endpoints in parallel
   useEffect(() => {
     Promise.all([
       fetch("/api/fetch-news").then((r) => r.json()),
       fetch("/api/arxiv").then((r) => r.json()),
       fetch("/api/ransomware?type=recentvictims").then((r) => r.json()),
     ])
-      .then(([n, p, v]) => {
-        setNews(n.results ?? n);
-        setPapers(p);
-        setVictims(v);
+      .then(([nRes, pRes, vRes]) => {
+        setNews(nRes.results ?? nRes);
+        setPapers(pRes);
+        setVictims(vRes);
         setLoading(false);
       })
       .catch((e) => {
@@ -63,19 +92,24 @@ export default function Index() {
       });
   }, []);
 
+  // format ISO → "Apr 1, 2025, 6:00 PM"
   const fmt = (iso: string) =>
     isNaN(Date.parse(iso))
       ? "Unknown"
       : format(parseISO(iso), "MMM d, yyyy, h:mm a");
 
+  // apply filter, category, sort, limit to 4
   const filteredNews = useMemo(() => {
     return news
       .filter((i) =>
-        (!search ||
-          i.title.toLowerCase().includes(search.toLowerCase())) &&
-        (!category ||
-          i.badge === category ||
-          i.tags?.includes(category))
+        !newsFilter
+          ? true
+          : i.title.toLowerCase().includes(newsFilter.toLowerCase())
+      )
+      .filter((i) =>
+        !category
+          ? true
+          : i.badge === category || i.tags?.includes(category)
       )
       .sort((a, b) => {
         const da = new Date(a.date).valueOf();
@@ -83,45 +117,64 @@ export default function Index() {
         return order === "desc" ? db - da : da - db;
       })
       .slice(0, 4);
-  }, [news, search, category, order]);
+  }, [news, newsFilter, category, order]);
 
+  // all unique badges+tags
   const categories = useMemo(
     () =>
       Array.from(
         new Set(
-          news.flatMap((i) => [i.badge, ...(i.tags ?? [])]).filter(Boolean)
+          news
+            .flatMap((i) => [i.badge, ...(i.tags ?? [])])
+            .filter(Boolean)
         )
       ),
     [news]
   );
 
+  // victims in the US
   const usVictims = useMemo(
     () => victims.filter((v) => v.country === "US"),
     [victims]
   );
 
+  // mini-reports array
   const miniReports = [
     {
-      title: "Chicago Public Schools Data Breach",
-      description: "CPS confirmed student data exposure in March 2025.",
+      id: 1,
+      title: "Chicago Public Schools Data Breach Exposes Student Information",
+      description:
+        "In March 2025, CPS reported a breach exposing names, DOBs, genders, and IDs of ~700,000 students.",
       date: "2025-03-07T00:00:00Z",
       link: "/mini-reports/1",
       badge: "Education",
-      tags: ["education", "data breach"],
+      tags: ["education", "data breach", "student information"],
     },
     {
-      title: "SRAM Investigates Cybersecurity Incident",
-      description: "Chicago-based SRAM faced an IT outage…",
-      date: "2025-03-27T00:00:00Z",
+      id: 2,
+      title: "SRAM Investigates Cybersecurity Incident Affecting IT Systems",
+      description:
+        "In April 2025, SRAM faced an IT outage due to a cyber issue; systems restored, investigation ongoing.",
+      date: "2025-04-01T00:00:00Z",
       link: "/mini-reports/2",
       badge: "Manufacturing",
-      tags: ["manufacturing", "cybersecurity"],
+      tags: ["manufacturing", "cybersecurity", "IT outage"],
+    },
+    {
+      id: 3,
+      title: "RansomHouse Claims Attack on Loretto Hospital in Chicago",
+      description:
+        "RansomHouse alleges they stole 1.5 TB of data from Loretto Hospital; details remain under review.",
+      date: "2025-03-10T00:00:00Z",
+      link: "/mini-reports/3",
+      badge: "Healthcare",
+      tags: ["healthcare", "ransomware", "data breach"],
     },
   ];
 
   return (
     <div className="relative overflow-hidden bg-gradient-subtle text-foreground min-h-screen">
-      {/* three animated blobs */}
+      {/* animated blobs */}
       <div className="blob-animation" />
       <div className="blob-2" />
       <div className="blob-3" />
@@ -138,20 +191,20 @@ export default function Index() {
             Chicago Cyber Threat Intelligence
           </h1>
           <p className="text-lg text-muted-foreground">
-            Real-time feeds, reports, and community tools for Chicagoland
-            defenders.
+            Real-time feeds, reports, and community tools for Chicagoland defenders.
           </p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (search.trim()) nav(`/search?query=${search.trim()}`);
+              const q = siteSearch.trim();
+              if (q) nav(`/search?query=${encodeURIComponent(q)}`);
             }}
             className="mx-auto flex max-w-lg gap-2"
           >
             <Input
               placeholder="Search entire site..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={siteSearch}
+              onChange={(e) => setSiteSearch(e.target.value)}
               className="flex-1"
             />
             <Button type="submit">
@@ -171,15 +224,12 @@ export default function Index() {
             <Card
               key={label}
               className="group relative flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card p-6 text-center hover:shadow-lg transition-shadow"
+              onClick={() => nav(to)}
+              role="button"
+              aria-label={label}
             >
               <Icon className="h-6 w-6 text-primary transition-colors group-hover:text-primary-foreground" />
               <span className="font-medium">{label}</span>
-              <div
-                className="absolute inset-0"
-                onClick={() => nav(to)}
-                role="button"
-                aria-label={label}
-              />
             </Card>
           ))}
         </div>
@@ -188,15 +238,15 @@ export default function Index() {
         <HomeSection title="Latest News" linkTo="/news">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter news..."
+              value={newsFilter}
+              onChange={(e) => setNewsFilter(e.target.value)}
               className="flex-1"
             />
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="whitespace-nowrap">
-                  <Filter className="mr-1 h-4 w-4" /> 
+                  <Filter className="mr-1 h-4 w-4" />
                   {category || "Category"}
                 </Button>
               </PopoverTrigger>
@@ -209,10 +259,7 @@ export default function Index() {
                       All
                     </CommandItem>
                     {categories.map((c) => (
-                      <CommandItem
-                        key={c}
-                        onSelect={() => setCategory(c)}
-                      >
+                      <CommandItem key={c} onSelect={() => setCategory(c)}>
                         {c}
                       </CommandItem>
                     ))}
@@ -261,7 +308,7 @@ export default function Index() {
           )}
         </HomeSection>
 
-        {/* Ransomware Victims */}
+        {/* Recent Ransomware Victims */}
         <HomeSection title="Recent Ransomware Victims (US)" linkTo="/research">
           <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {usVictims.slice(0, 6).map((v, i) => (
@@ -270,11 +317,8 @@ export default function Index() {
           </div>
         </HomeSection>
 
-        {/* Security Papers */}
-        <HomeSection
-          title="Recently Published Security Papers"
-          linkTo="/research"
-        >
+        {/* Recently Published Security Papers */}
+        <HomeSection title="Recently Published Security Papers" linkTo="/research">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {papers.map((p) => (
               <RP_Card key={p.link} {...p} />
@@ -282,18 +326,20 @@ export default function Index() {
           </div>
         </HomeSection>
 
-        {/* Mini Reports */}
+        {/* CCTIC Mini Reports */}
         <HomeSection title="CCTIC Mini Reports" linkTo="/mini-reports">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {miniReports.map((r, i) => (
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {miniReports.slice(0, 3).map((r) => (
               <ContentCard
-                key={i}
+                key={r.id}
+                variant="report"
                 title={r.title}
                 description={r.description}
                 link={r.link}
                 date={fmt(r.date)}
                 badge={r.badge}
                 tags={r.tags}
+                className="hover:-translate-y-1 transition-transform"
               />
             ))}
           </div>

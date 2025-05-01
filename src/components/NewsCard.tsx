@@ -1,4 +1,3 @@
-// src/components/NewsCard.tsx
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -27,39 +26,53 @@ export const NewsCard: React.FC<NewsCardProps> = ({
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.4 }}
-    className="group relative flex flex-col justify-between rounded-lg border border-border bg-card p-6 hover:shadow-lg transition-shadow"
+    className="group relative flex h-full flex-col rounded-lg border border-border bg-card p-5 sm:p-6 min-h-[300px] hover:shadow-lg transition-shadow"
   >
-    <header className="mb-4 flex items-center justify-between">
-      <time className="text-xs text-muted-foreground">{date}</time>
-      <span className="inline-block rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-        {badge}
-      </span>
-    </header>
+    {/* Body grows to push "Read more" to bottom */}
+    <div className="flex flex-col flex-1">
+      {/* Header */}
+      <header className="mb-3 flex items-center justify-between">
+        <time className="text-xs sm:text-sm text-muted-foreground">{date}</time>
+        <span className="inline-block rounded-full bg-primary px-2 sm:px-3 py-0.5 text-[10px] sm:text-xs font-semibold text-primary-foreground">
+          {badge}
+        </span>
+      </header>
 
-    <h3 className="mb-2 text-lg font-mono font-semibold leading-snug group-hover:text-primary transition-colors">
-      {title}
-    </h3>
+      {/* Title: No line clamping, wraps naturally */}
+      <h3
+        className={cn(
+          "mb-3 text-lg sm:text-xl font-mono font-semibold leading-tight transition-colors",
+          "group-hover:text-primary"
+        )}
+      >
+        {title}
+      </h3>
 
-    <p className="mb-4 text-sm text-muted-foreground line-clamp-3">{description}</p>
+      {/* Description: Clamp to 4 lines */}
+      <p className="mb-4 flex-1 text-sm sm:text-base text-muted-foreground leading-relaxed line-clamp-4">
+        {description}
+      </p>
 
-    {tags.length > 0 && (
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tags.map((t) => (
-          <span
-            key={t}
-            className="text-[10px] bg-muted px-2 py-0.5 rounded-full text-muted-foreground"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
-    )}
+      {/* Tags */}
+      {tags.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {tags.map((t) => (
+            <span
+              key={t}
+              className="text-[10px] sm:text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
 
+    {/* Footer link always at bottom */}
     <Link
       to={link}
-      className={cn(
-        "mt-auto inline-flex items-center text-sm font-medium text-primary hover:underline"
-      )}
+      className="mt-auto inline-flex items-center text-sm sm:text-base font-medium text-primary hover:underline"
+      aria-label={`Read more about ${title}`}
     >
       Read more <ArrowRight className="ml-1 h-4 w-4" />
     </Link>

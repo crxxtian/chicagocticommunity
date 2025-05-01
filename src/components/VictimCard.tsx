@@ -58,7 +58,7 @@ export default function VictimCard({
         <div className="mt-4 text-xs text-muted-foreground italic space-y-1">
           <div className="flex items-center gap-2 font-medium text-red-500">
             <Shield className="w-4 h-4 shrink-0" />
-            <span>Leak site detected by group: <strong>{group}</strong></span>
+            <span>Ransomware Group: <strong>{group}</strong></span>
           </div>
           <div className="pl-6 text-muted-foreground">
             URL hidden for safety.

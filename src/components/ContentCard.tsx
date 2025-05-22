@@ -45,7 +45,7 @@ const BADGE_CLASSES: Record<string, string> = {
 };
 
 const VARIANT_CONFIG = {
-  news:      { clampTitle: "line-clamp-4", clampDesc: "line-clamp-3", minH: "min-h-[360px]" },
+  news:      { clampTitle: "", clampDesc: "line-clamp-3", minH: "min-h-[360px]" },
   report:    { clampTitle: "", clampDesc: "line-clamp-2", minH: "min-h-[320px]" }, // Removed title clamp, increased min-h
   spotlight: { clampTitle: "line-clamp-2", clampDesc: "line-clamp-2", minH: "min-h-[240px]" },
 } as const;

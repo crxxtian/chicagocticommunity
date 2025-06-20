@@ -211,6 +211,9 @@ export default function Index() {
               <LucideSearch className="h-5 w-5" />
             </Button>
           </form>
+          <Button variant="primary" onClick={() => window.location.href = '/newsletter'}>
+            Join our Free Newsletter!
+          </Button>
         </motion.section>
 
         {/* Quick Links */}
@@ -313,34 +316,6 @@ export default function Index() {
           <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {usVictims.slice(0, 6).map((v, i) => (
               <VictimCard key={i} {...v} />
-            ))}
-          </div>
-        </HomeSection>
-
-        {/* Recently Published Security Papers */}
-        <HomeSection title="Recently Published Security Papers" linkTo="/research">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {papers.map((p) => (
-              <RP_Card key={p.link} {...p} />
-            ))}
-          </div>
-        </HomeSection>
-
-        {/* CCTIC Mini Reports */}
-        <HomeSection title="CCTIC Mini Reports" linkTo="/mini-reports">
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {miniReports.slice(0, 3).map((r) => (
-              <ContentCard
-                key={r.id}
-                variant="report"
-                title={r.title}
-                description={r.description}
-                link={r.link}
-                date={fmt(r.date)}
-                badge={r.badge}
-                tags={r.tags}
-                className="hover:-translate-y-1 transition-transform"
-              />
             ))}
           </div>
         </HomeSection>

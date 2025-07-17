@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Navbar } from "./components/Navbar";
+import { Analytics } from "@vercel/analytics/react";
 
 import Index from "./pages/Index";
 import News from "./pages/News";
@@ -55,6 +56,7 @@ const App = () => (
             </footer>
           </div>
         </BrowserRouter>
+        <Analytics />
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

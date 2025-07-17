@@ -211,28 +211,61 @@ export default function Index() {
               <LucideSearch className="h-5 w-5" />
             </Button>
           </form>
-          <div className="mt-8 flex flex-col items-center gap-6">
-            <div className="max-w-xl w-full bg-card rounded-lg p-4 border border-border shadow-md">
-              <h3 className="text-xl font-semibold mb-2 text-center">Stay Updated with CCTIC Threat Watch</h3>
-              <p className="text-muted-foreground text-center mb-4">Get the latest cybersecurity insights for Chicago defenders delivered to your inbox.</p>
-              <iframe
-                src="https://ccticthreatwatch.substack.com/embed"
-                width="100%"
-                height="320"
-                style={{ border: '1px solid #EEE', background: 'white', borderRadius: '0.5rem' }}
-                frameBorder="0"
-                scrolling="no"
-                title="CCTIC Newsletter Signup"
-                className="mx-auto"
-              />
-            </div>
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={() => window.location.href = '/newsletter'}>
-                Learn More
-              </Button>
-              <Button variant="primary" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>
-                Explore Content
-              </Button>
+          <div className="mt-6 flex justify-center">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 group"
+              onClick={() => {
+                const modal = document.getElementById('newsletter-modal');
+                if (modal) modal.style.display = 'flex';
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:scale-110">
+                <path d="M21.5 12H2.5" />
+                <path d="M12 2.5v19" />
+                <path d="M12 2.5v19" />
+              </svg>
+              Subscribe to CCTIC Threat Watch
+            </Button>
+          </div>
+
+          {/* Newsletter Modal */}
+          <div
+            id="newsletter-modal"
+            className="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                const modal = document.getElementById('newsletter-modal');
+                if (modal) modal.style.display = 'none';
+              }
+            }}
+          >
+            <div className="bg-card rounded-lg p-6 border border-border shadow-xl max-w-md w-full relative">
+              <button
+                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const modal = document.getElementById('newsletter-modal');
+                  if (modal) modal.style.display = 'none';
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+              <h3 className="text-xl font-semibold mb-2">Stay Updated with CCTIC Threat Watch</h3>
+              <p className="text-muted-foreground mb-4">Get the latest cybersecurity insights for Chicago defenders delivered to your inbox.</p>
+              <div className="relative">
+                <iframe
+                  src="https://ccticthreatwatch.substack.com/embed"
+                  width="100%"
+                  height="250"
+                  style={{ border: '1px solid var(--border)', borderRadius: '0.5rem' }}
+                  title="CCTIC Newsletter Signup"
+                  className="mx-auto z-10 relative bg-transparent"
+                />
+                <div className="absolute inset-0 bg-background opacity-20 z-0 pointer-events-none"></div>
+              </div>
             </div>
           </div>
         </motion.section>

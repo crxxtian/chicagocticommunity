@@ -214,31 +214,67 @@ export default function Index() {
           <div className="mt-8 flex justify-center">
             <Button
               variant="default"
-              className="group relative overflow-hidden px-8 py-6 font-mono text-base border-2 border-primary hover:border-primary/80 transition-all duration-300 shadow-lg hover:shadow-primary/20"
+              className="group relative overflow-hidden px-8 py-6 font-mono text-base border-none transition-all duration-300 bg-gradient-to-r from-primary/80 to-primary/50 hover:from-primary hover:to-primary/70"
               onClick={() => {
                 const modal = document.getElementById('newsletter-modal');
                 if (modal) modal.style.display = 'flex';
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
-              <div className="absolute -inset-1 bg-primary/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-              
+              {/* Animated cyber grid background */}
+              <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity">
+                <div className="absolute inset-0 grid grid-cols-8 grid-rows-4 gap-px">
+                  {Array(32).fill(0).map((_, i) => (
+                    <div key={i} className="bg-white" style={{
+                      opacity: Math.random() * 0.5 + 0.25,
+                      animation: `pulse ${Math.random() * 3 + 2}s infinite ${Math.random() * 2}s`
+                    }}></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Glowing effect */}
+              <div className="absolute -inset-1 bg-primary/20 blur-xl opacity-0 group-hover:opacity-70 transition-opacity" />
+
+              {/* Lock icon with animated shield */}
               <div className="flex items-center gap-3 z-10 relative">
-                <div className="flex items-center justify-center bg-primary/20 rounded-full p-1.5 group-hover:scale-110 transition-transform">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="20" height="16" x="2" y="4" rx="2" />
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                <div className="flex items-center justify-center bg-background/20 backdrop-blur-sm rounded-full p-2 group-hover:scale-110 transition-transform duration-500 border border-white/20 shadow-glow">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-background">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                    <path d="M8 11h8" className="animate-pulse" />
+                    <path d="M8 15h8" className="animate-pulse" style={{ animationDelay: '0.5s' }} />
                   </svg>
                 </div>
-                <span className="font-bold tracking-wide">
-                  JOIN 100+ CYBER DEFENDERS READING OUR FREE NEWSLETTER
-                  <span className="ml-1 text-primary animate-pulse">_</span>
-                </span>
+                <div>
+                  <span className="font-bold tracking-wide text-background flex items-center">
+                    JOIN 100+ CYBER DEFENDERS
+                    <span className="ml-1 text-background animate-pulse">_</span>
+                  </span>
+                  <span className="text-xs text-background/80 tracking-wider">FREE THREAT INTELLIGENCE NEWSLETTER</span>
+                </div>
               </div>
-              
-              <div className="absolute bottom-0 left-0 h-1 bg-primary w-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+
+              {/* Animated border */}
+              <div className="absolute bottom-0 left-0 h-0.5 bg-background/50 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
+              <div className="absolute top-0 right-0 h-0.5 bg-background/50 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-right duration-500" />
+
+              {/* Animated corners */}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-background/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-background/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-background/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-background/50 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Button>
           </div>
+
+          {/* Add keyframe animation for the grid cells */}
+          <style jsx global>{`
+            @keyframes pulse {
+              0%, 100% { opacity: 0.2; }
+              50% { opacity: 0.8; }
+            }
+            .shadow-glow {
+              box-shadow: 0 0 15px 2px rgba(var(--primary-rgb), 0.3);
+            }
+          `}</style>
 
           {/* Newsletter Modal */}
           <div

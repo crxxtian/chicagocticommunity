@@ -211,21 +211,32 @@ export default function Index() {
               <LucideSearch className="h-5 w-5" />
             </Button>
           </form>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-8 flex justify-center">
             <Button
-              variant="outline"
-              className="flex items-center gap-2 group"
+              variant="default"
+              className="group relative overflow-hidden px-8 py-6 font-mono text-base border-2 border-primary hover:border-primary/80 transition-all duration-300 shadow-lg hover:shadow-primary/20"
               onClick={() => {
                 const modal = document.getElementById('newsletter-modal');
                 if (modal) modal.style.display = 'flex';
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:scale-110">
-                <path d="M21.5 12H2.5" />
-                <path d="M12 2.5v19" />
-                <path d="M12 2.5v19" />
-              </svg>
-              Subscribe to CCTIC Threat Watch
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
+              <div className="absolute -inset-1 bg-primary/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="flex items-center gap-3 z-10 relative">
+                <div className="flex items-center justify-center bg-primary/20 rounded-full p-1.5 group-hover:scale-110 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                </div>
+                <span className="font-bold tracking-wide">
+                  JOIN 100+ CYBER DEFENDERS READING OUR FREE NEWSLETTER
+                  <span className="ml-1 text-primary animate-pulse">_</span>
+                </span>
+              </div>
+              
+              <div className="absolute bottom-0 left-0 h-1 bg-primary w-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
             </Button>
           </div>
 

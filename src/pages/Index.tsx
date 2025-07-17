@@ -211,9 +211,30 @@ export default function Index() {
               <LucideSearch className="h-5 w-5" />
             </Button>
           </form>
-          <Button variant="primary" onClick={() => window.location.href = '/newsletter'}>
-            Join our Free Newsletter!
-          </Button>
+          <div className="mt-8 flex flex-col items-center gap-6">
+            <div className="max-w-xl w-full bg-card rounded-lg p-4 border border-border shadow-md">
+              <h3 className="text-xl font-semibold mb-2 text-center">Stay Updated with CCTIC Threat Watch</h3>
+              <p className="text-muted-foreground text-center mb-4">Get the latest cybersecurity insights for Chicago defenders delivered to your inbox.</p>
+              <iframe
+                src="https://ccticthreatwatch.substack.com/embed"
+                width="100%"
+                height="320"
+                style={{ border: '1px solid #EEE', background: 'white', borderRadius: '0.5rem' }}
+                frameBorder="0"
+                scrolling="no"
+                title="CCTIC Newsletter Signup"
+                className="mx-auto"
+              />
+            </div>
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => window.location.href = '/newsletter'}>
+                Learn More
+              </Button>
+              <Button variant="primary" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>
+                Explore Content
+              </Button>
+            </div>
+          </div>
         </motion.section>
 
         {/* Quick Links */}

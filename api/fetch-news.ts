@@ -2,6 +2,11 @@ import Parser from "rss-parser";
 
 const parser = new Parser();
 
+// 1. TIMEOUT HELPER: This forces a fail if a request takes > 3 seconds
+const timeout = (ms: number) => new Promise((_, reject) =>
+  setTimeout(() => reject(new Error("Request timed out")), ms)
+);
+
 const rssFeeds = [
   "https://www.bleepingcomputer.com/feed/",
   "https://feeds.feedburner.com/TheHackersNews",
@@ -99,8 +104,18 @@ export default async function handler(req: any, res: any) {
   try {
     const { search = "", page = 1, limit = 30 } = req.query;
 
+    // 2. THE FIX IS HERE: We now race the parser against the 3s timer
     const rssResults = await Promise.allSettled(
-      rssFeeds.map((url) => parser.parseURL(url))
+      rssFeeds.map(async (url) => {
+        try {
+          return await Promise.race([
+            parser.parseURL(url),
+            timeout(3000) // If it takes > 3s, kill it and move on
+          ]);
+        } catch (error) {
+          throw error;
+        }
+      })
     );
 
     const parsedItems = rssResults

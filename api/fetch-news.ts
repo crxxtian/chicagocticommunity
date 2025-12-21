@@ -30,7 +30,6 @@ const rssFeeds = [
   "https://cyberalerts.io/rss/latest-public",
   "https://www.csoonline.com/index.rss",
   "https://www.infosecurity-magazine.com/rss/news/",
-  "https://securityaffairs.com/feed",
   "https://therecord.media/feed",
   "https://www.bankinfosecurity.com/rss_feed.php"
 ];

@@ -292,16 +292,7 @@ It has targeted **CDW**, **Illinois state agencies**, and several logistics and 
                 <p className="text-sm text-muted-foreground">
                   Sector: <strong>{v.activity || "Unknown"}</strong> • {fmtDate(v.attackdate)}
                 </p>
-                {v.claim_url && (
-                  <a
-                    href={v.claim_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-500 underline pt-1 block"
-                  >
-                    View breach record
-                  </a>
-                )}
+  
               </div>
             ))}
           </div>

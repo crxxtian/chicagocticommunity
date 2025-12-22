@@ -19,7 +19,6 @@ const rssFeeds = [
   "https://cybernews.com/feed/",
   "https://grahamcluley.com/feed/",
   "https://isc.sans.edu/rssfeed_full.xml",
-  "https://www.schneier.com/feed/atom/",
   "https://securelist.com/feed/",
   "https://news.sophos.com/en-us/category/security-operations/feed/",
   "https://news.sophos.com/en-us/category/threat-research/feed/",
